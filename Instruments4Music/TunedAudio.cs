@@ -8,31 +8,39 @@ namespace Instruments4Music
     {
         private const double TuneCoeff = 1.059463f;
 
-        static readonly Dictionary<string, (AudioClip, int)> InstrDictionary = [];
-        static readonly Dictionary<(string, int), AudioSource> TunedDictionary = [];
+        static Dictionary<string, (AudioClip, int)> InstrDictionary = new Dictionary<string, (AudioClip, int)>();
+        static Dictionary<(string, int), AudioSource> TunedDictionary = new Dictionary<(string, int), AudioSource>();
 
         public static bool theShowIsOn = false;
-        public static string activeInstrName = "";
+        public static string activeClipName = "";
+        public static GameObject activeInstrObject;
 
-        public static void RegisterInstrClip(string instrName, int sourceNoteNumber, AudioClip clip)
+        public static void RegisterInstrClip(GameObject gameObject, int sourceNoteNumber, AudioClip clip)
         {
-            if (!InstrDictionary.ContainsKey(instrName))
+            if (!InstrDictionary.ContainsKey(clip.name))
             {
-                InstrDictionary.Add(instrName, (clip, sourceNoteNumber));
+                InstrDictionary.Add(clip.name, (clip, sourceNoteNumber));
             }
-            activeInstrName = instrName;
+
+            activeClipName = clip.name;
+            activeInstrObject = gameObject;
             theShowIsOn = true;
         }
 
-        /* NoteNumber: 0~35 corresponding to the Note names of 3 octaves */
-        public static AudioSource GetTunedAudio(int targetNoteNumber, GameObject gameObject)
+        public static void DeactiveInstrument()
         {
-            if (TunedDictionary.TryGetValue((activeInstrName, targetNoteNumber), out var audioSource))
+            theShowIsOn = false;
+        }
+
+        /* NoteNumber: 0~35 corresponding to the Note names of 3 octaves */
+        public static AudioSource GetTunedAudio(int targetNoteNumber)
+        {
+            if (TunedDictionary.TryGetValue((activeClipName, targetNoteNumber), out var audioSource))
             {
                 return audioSource;
             }
 
-            if (!InstrDictionary.TryGetValue(activeInstrName, out var value))
+            if (!InstrDictionary.TryGetValue(activeClipName, out var value))
             {
                 return null;
             }
@@ -41,11 +49,11 @@ namespace Instruments4Music
             var sourceNoteNumber = value.Item2;
             var power = targetNoteNumber - sourceNoteNumber;
 
-            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource = activeInstrObject.AddComponent<AudioSource>();
             audioSource.clip = clip;
             audioSource.volume = 1.0f;
             audioSource.pitch = (float)Math.Pow(TuneCoeff, power);
-            TunedDictionary.Add((activeInstrName, targetNoteNumber), audioSource);
+            TunedDictionary.Add((activeClipName, targetNoteNumber), audioSource);
 
             return audioSource;
         }

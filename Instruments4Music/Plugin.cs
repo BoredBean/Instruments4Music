@@ -1,11 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using LethalCompanyInputUtils.Api;
-using System;
-using Unity.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 namespace Instruments4Music
@@ -17,8 +13,10 @@ namespace Instruments4Music
     {
         internal static ManualLogSource LOGGER;
         public static ConfigFile config;
+        public static Sprite HOVER_ICON { get; private set; }
+        public static ConfigEntry<bool> CONFIG_SHOW_TOOLTIP { get; private set; }
 
-        internal static InstrInputClass InputActionsInstance = new InstrInputClass();
+        internal static InstrInputActions InputActionsInstance = new InstrInputActions();
         public void AddLog(string str)
         {
             Logger.LogInfo(str);
@@ -41,49 +39,4 @@ namespace Instruments4Music
             }
         }
     }
-
-    //public class PlayInstrumentBehavior
-    //{
-    //    public void Update()
-    //    {
-    //        DoSomething();
-    //    }
-
-    //    public void DoSomething()
-    //    {
-    //        if (Instruments4MusicPlugin.InputActionsInstance.HighCKey.triggered) return;
-
-    //        //Play HighC
-    //    }
-    //}
-
-    //public class StartConcertBehavior
-    //{
-    //    public void Awake()
-    //    {
-    //        SetupKeybindCallbacks();
-    //    }
-
-    //    public void SetupKeybindCallbacks()
-    //    {
-    //        Instruments4MusicPlugin.InputActionsInstance.Showtime.performed += ItsShowTime;
-    //        Instruments4MusicPlugin.InputActionsInstance.CurtainCall.performed += AnswerCurtainCall;
-    //    }
-
-    //    public void ItsShowTime(InputAction.CallbackContext instrumentConext)
-    //    {
-    //        if (!instrumentConext.performed) return;
-    //        // Add more context checks if desired
-
-    //        // Your executing code here
-    //    }
-
-    //    public void AnswerCurtainCall(InputAction.CallbackContext instrumentConext)
-    //    {
-    //        if (!instrumentConext.performed) return;
-    //        // Add more context checks if desired
-
-    //        // Your executing code here
-    //    }
-    //}
 }

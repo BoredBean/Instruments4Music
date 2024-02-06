@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using LethalCompanyInputUtils;
-using LethalCompanyInputUtils.Api;
+﻿using LethalCompanyInputUtils.Api;
 using UnityEngine.InputSystem;
 
 namespace Instruments4Music
 {
-    public class InstrInputClass : LcInputActions
+    public class InstrInputActions : LcInputActions
     {
         [InputAction("<Mouse>/rightButton", Name = "Showtime!", ActionId = "Showtime", KbmInteractions = "hold(duration = 3)")]
         public InputAction? Showtime { get; set; }
