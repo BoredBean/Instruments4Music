@@ -130,37 +130,37 @@ namespace Instruments4Music
         {
             if (theShowIsOn)
             {
-                if (Instruments4MusicPlugin.InputActionsInstance.HighCKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.LowCKey.triggered)
                 {
                     PlayTunedAudio(0);
                 }
 
-                if (Instruments4MusicPlugin.InputActionsInstance.HighDKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.LowDKey.triggered)
                 {
                     PlayTunedAudio(2);
                 }
 
-                if (Instruments4MusicPlugin.InputActionsInstance.HighEKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.LowEKey.triggered)
                 {
                     PlayTunedAudio(4);
                 }
 
-                if (Instruments4MusicPlugin.InputActionsInstance.HighFKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.LowFKey.triggered)
                 {
                     PlayTunedAudio(5);
                 }
 
-                if (Instruments4MusicPlugin.InputActionsInstance.HighGKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.LowGKey.triggered)
                 {
                     PlayTunedAudio(7);
                 }
 
-                if (Instruments4MusicPlugin.InputActionsInstance.HighAKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.LowAKey.triggered)
                 {
                     PlayTunedAudio(9);
                 }
 
-                if (Instruments4MusicPlugin.InputActionsInstance.HighBKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.LowBKey.triggered)
                 {
                     PlayTunedAudio(11);
                 }
@@ -200,37 +200,37 @@ namespace Instruments4Music
                     PlayTunedAudio(23);
                 }
 
-                if (Instruments4MusicPlugin.InputActionsInstance.LowCKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.HighCKey.triggered)
                 {
                     PlayTunedAudio(24);
                 }
 
-                if (Instruments4MusicPlugin.InputActionsInstance.LowDKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.HighDKey.triggered)
                 {
                     PlayTunedAudio(26);
                 }
 
-                if (Instruments4MusicPlugin.InputActionsInstance.LowEKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.HighEKey.triggered)
                 {
                     PlayTunedAudio(28);
                 }
 
-                if (Instruments4MusicPlugin.InputActionsInstance.LowFKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.HighFKey.triggered)
                 {
                     PlayTunedAudio(29);
                 }
 
-                if (Instruments4MusicPlugin.InputActionsInstance.LowGKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.HighGKey.triggered)
                 {
                     PlayTunedAudio(31);
                 }
 
-                if (Instruments4MusicPlugin.InputActionsInstance.LowAKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.HighAKey.triggered)
                 {
                     PlayTunedAudio(33);
                 }
 
-                if (Instruments4MusicPlugin.InputActionsInstance.LowBKey.triggered)
+                if (Instruments4MusicPlugin.InputActionsInstance.HighBKey.triggered)
                 {
                     PlayTunedAudio(35);
                 }
