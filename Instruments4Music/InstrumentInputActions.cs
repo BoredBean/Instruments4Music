@@ -5,10 +5,18 @@ namespace Instruments4Music
 {
     public class InstrumentInputActions : LcInputActions
     {
-        [InputAction("<Keyboard>/q", Name = "Showtime!", ActionId = "Showtime", KbmInteractions = "hold(duration = 3)")]
+        [InputAction("<Keyboard>/alt", Name = "Showtime!", ActionId = "Showtime", KbmInteractions = "hold(duration = 2)")]
         public InputAction? Showtime { get; set; }
-        [InputAction("<Keyboard>/tab", Name = "Curtain Call", ActionId = "CurtainCall")]
+        [InputAction("<Keyboard>/esc", Name = "Curtain Call", ActionId = "CurtainCall")]
         public InputAction? CurtainCall { get; set; }
+        [InputAction("<Keyboard>/shift", Name = "Semitone", ActionId = "Semitone")]
+        public InputAction? Semitone { get; set; }
+        [InputAction("<Keyboard>/space", Name = "Sustain", ActionId = "Sustain")]
+        public InputAction? Sustain { get; set; }
+        [InputAction("<Keyboard>/ctrl", Name = "Soft", ActionId = "Soft")]
+        public InputAction? Soft { get; set; }
+        [InputAction("<Keyboard>/tab", Name = "Change Mode", ActionId = "ChangeMode")]
+        public InputAction? ChangeMode { get; set; }
         [InputAction("<Keyboard>/q", Name = "High C", ActionId = "HighC")]
         public InputAction? HighCKey { get; set; }
         [InputAction("<Keyboard>/w", Name = "High D", ActionId = "HighD")]

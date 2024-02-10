@@ -8,16 +8,19 @@ using UnityEngine.InputSystem;
 
 namespace Instruments4Music
 {
-    public  class TuneAudioScript:MonoBehaviour
+    public class TuneAudioScript : MonoBehaviour
     {
-        private const double TuneCoeff = 1.059463f;
-        private static float lastTimer = 1.0f;
+        const double TuneCoeff = 1.059463f; 
+        static float lastTimer = 3.0f;
+        static float softModifier = 0.5f;
+        static float sustainModifier = 4.0f;
 
         static Dictionary<string, (AudioClip, int)> InstrDictionary = new Dictionary<string, (AudioClip, int)>();
         static Dictionary<(string, int), AudioSource> TunedDictionary = new Dictionary<(string, int), AudioSource>();
         static ConcurrentDictionary<(string, int), float> TimerDictionary = new ConcurrentDictionary<(string, int), float>();
 
         public static bool theShowIsOn = false;
+        public static bool movableMode = false;
         public static string activeClipName = "";
         public static GameObject activeInstrObject;
 
@@ -47,21 +50,28 @@ namespace Instruments4Music
         }
 
         /* NoteNumber: 0~35 corresponding to the Note names of 3 octaves */
-        public static void PlayTunedAudio(int targetNoteNumber)
+        public static void PlayTunedAudio(int targetNoteNumber, bool isSoft)
         {
             Instruments4MusicPlugin.LOGGER.LogInfo($"Playing note {targetNoteNumber}.");
 
             TimerDictionary[(activeClipName, targetNoteNumber)] = lastTimer;
+            var volume = 1.0f;
+            if (isSoft)
+            {
+                volume -= softModifier;
+            }
+
             if (TunedDictionary.TryGetValue((activeClipName, targetNoteNumber), out var audioSource))
             {
-                audioSource.volume = 1.0f;
+
+                audioSource.volume = volume;
                 audioSource.Play();
-                return ;
+                return;
             }
 
             if (!InstrDictionary.TryGetValue(activeClipName, out var value))
             {
-                return ;
+                return;
             }
 
             var clip = value.Item1;
@@ -71,34 +81,36 @@ namespace Instruments4Music
             audioSource = activeInstrObject.AddComponent<AudioSource>();
             audioSource.clip = clip;
             audioSource.pitch = (float)Math.Pow(TuneCoeff, power);
-            audioSource.volume = 1.0f;
+            audioSource.volume = volume;
             audioSource.Play();
             TunedDictionary.Add((activeClipName, targetNoteNumber), audioSource);
 
             return;
         }
 
-        public static void AudioCountDown()
+        public static void AudioCountDown(bool isSustain)
         {
             foreach (var timerDictionaryKey in TimerDictionary.Keys)
             {
                 float timeLast = TimerDictionary[timerDictionaryKey];
-                if (TunedDictionary.TryGetValue(timerDictionaryKey, out AudioSource audioSource))
+                if (TunedDictionary.TryGetValue(timerDictionaryKey, out var audioSource) && timeLast >= 0.0 && audioSource.volume > 0.0)
                 {
-                    if (timeLast >= 0.0)
+                    if (isSustain)
                     {
-                        TimerDictionary[timerDictionaryKey] = timeLast - Time.deltaTime;
-                        audioSource.volume = timeLast / lastTimer;
+                        TimerDictionary[timerDictionaryKey] = timeLast - Time.deltaTime / sustainModifier; 
+                        audioSource.volume -= Time.deltaTime / sustainModifier / lastTimer;
+
                     }
                     else
                     {
-                        TimerDictionary.Remove(timerDictionaryKey, out float t);
-                        audioSource.Stop();
+                        TimerDictionary[timerDictionaryKey] = timeLast - Time.deltaTime;
+                        audioSource.volume -= Time.deltaTime / lastTimer;
                     }
                 }
                 else
                 {
-                    TimerDictionary.Remove(timerDictionaryKey, out float t);
+                    TimerDictionary.Remove(timerDictionaryKey, out _);
+                    audioSource.Stop();
                 }
             }
         }
@@ -128,115 +140,121 @@ namespace Instruments4Music
 
         public void Update()
         {
-            if (theShowIsOn)
+            if (!theShowIsOn) return;
+
+            int semiTone = 0;
+            bool isSoft = Instruments4MusicPlugin.InputActionsInstance.Soft.triggered;
+            bool isSustain = Instruments4MusicPlugin.InputActionsInstance.Sustain.triggered;
+            if (Instruments4MusicPlugin.InputActionsInstance.Semitone.triggered)
             {
-                if (Instruments4MusicPlugin.InputActionsInstance.LowCKey.triggered)
-                {
-                    PlayTunedAudio(0);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.LowDKey.triggered)
-                {
-                    PlayTunedAudio(2);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.LowEKey.triggered)
-                {
-                    PlayTunedAudio(4);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.LowFKey.triggered)
-                {
-                    PlayTunedAudio(5);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.LowGKey.triggered)
-                {
-                    PlayTunedAudio(7);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.LowAKey.triggered)
-                {
-                    PlayTunedAudio(9);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.LowBKey.triggered)
-                {
-                    PlayTunedAudio(11);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.MidCKey.triggered)
-                {
-                    PlayTunedAudio(12);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.MidDKey.triggered)
-                {
-                    PlayTunedAudio(14);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.MidEKey.triggered)
-                {
-                    PlayTunedAudio(16);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.MidFKey.triggered)
-                {
-                    PlayTunedAudio(17);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.MidGKey.triggered)
-                {
-                    PlayTunedAudio(19);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.MidAKey.triggered)
-                {
-                    PlayTunedAudio(21);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.MidBKey.triggered)
-                {
-                    PlayTunedAudio(23);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.HighCKey.triggered)
-                {
-                    PlayTunedAudio(24);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.HighDKey.triggered)
-                {
-                    PlayTunedAudio(26);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.HighEKey.triggered)
-                {
-                    PlayTunedAudio(28);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.HighFKey.triggered)
-                {
-                    PlayTunedAudio(29);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.HighGKey.triggered)
-                {
-                    PlayTunedAudio(31);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.HighAKey.triggered)
-                {
-                    PlayTunedAudio(33);
-                }
-
-                if (Instruments4MusicPlugin.InputActionsInstance.HighBKey.triggered)
-                {
-                    PlayTunedAudio(35);
-                }
-
-                AudioCountDown();
+                semiTone = 1;
             }
+            if (Instruments4MusicPlugin.InputActionsInstance.LowCKey.triggered)
+            {
+                PlayTunedAudio(0 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.LowDKey.triggered)
+            {
+                PlayTunedAudio(2 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.LowEKey.triggered)
+            {
+                PlayTunedAudio(4, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.LowFKey.triggered)
+            {
+                PlayTunedAudio(5 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.LowGKey.triggered)
+            {
+                PlayTunedAudio(7 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.LowAKey.triggered)
+            {
+                PlayTunedAudio(9 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.LowBKey.triggered)
+            {
+                PlayTunedAudio(11, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.MidCKey.triggered)
+            {
+                PlayTunedAudio(12 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.MidDKey.triggered)
+            {
+                PlayTunedAudio(14 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.MidEKey.triggered)
+            {
+                PlayTunedAudio(16, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.MidFKey.triggered)
+            {
+                PlayTunedAudio(17 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.MidGKey.triggered)
+            {
+                PlayTunedAudio(19 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.MidAKey.triggered)
+            {
+                PlayTunedAudio(21 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.MidBKey.triggered)
+            {
+                PlayTunedAudio(23, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.HighCKey.triggered)
+            {
+                PlayTunedAudio(24 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.HighDKey.triggered)
+            {
+                PlayTunedAudio(26 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.HighEKey.triggered)
+            {
+                PlayTunedAudio(28, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.HighFKey.triggered)
+            {
+                PlayTunedAudio(29 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.HighGKey.triggered)
+            {
+                PlayTunedAudio(31 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.HighAKey.triggered)
+            {
+                PlayTunedAudio(33 + semiTone, isSoft);
+            }
+
+            if (Instruments4MusicPlugin.InputActionsInstance.HighBKey.triggered)
+            {
+                PlayTunedAudio(35, isSoft);
+            }
+
+            AudioCountDown(isSustain);
         }
     }
 }
