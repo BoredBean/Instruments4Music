@@ -11,9 +11,11 @@ namespace Instruments4Music
     {
         public static void Load()
         {
-            Config.configActiveHorn = Instruments4MusicPlugin.config.Bind("InstrumentsActive", "ActiveHorn", true, "Active \"Horn\" as an instrument.");
+            configActiveHorn = Instruments4MusicPlugin.config?.Bind("InstrumentsActive", "ActiveHorn", true, "Active \"Horn\" as an instrument.");
+            configHUDScale = Instruments4MusicPlugin.config?.Bind("InstrumentsHUD", "HUDScale", 1.0f, "Scale the music HUD.");
         }
 
-        public static ConfigEntry<bool> configActiveHorn;
+        public static ConfigEntry<bool>? configActiveHorn;
+        public static ConfigEntry<float>? configHUDScale;
     }
 }

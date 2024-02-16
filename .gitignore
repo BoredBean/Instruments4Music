@@ -67,8 +67,5 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
-/SpectateEnemies-main
-/MirrorDecorVirtualCamPosFix-main
-/LCBetterSprayPaint-master
 /Instruments4Music/obj
 /Instruments4Music/bin/Debug/netstandard2.1
