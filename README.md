@@ -6,11 +6,17 @@ This plugin utilizes [LethalCompany InputUtils](https://thunderstore.io/c/lethal
 
 **The developer has limited knowledge of C# or Unity, so this plugin may not work very well.**
 
+**(Especially when you quit one room and then join another one.)**
+
 ## How to use:
-Aim at a possible statinary instrument or holding a portable instrument and press **"LeftAlt"** for **2 seconds**.
-Possible statinary instruments: Ship Horn, Light Switch, Pumpkin Head...
+Aim at a possible stationary instrument or holding a portable instrument and press **"LeftAlt"** for **2 seconds**.
+
+Possible stationary instruments: Ship Horn, Light Switch, Pumpkin Head...
+
 Possible portable instruments: Clown Horn, Air Horn, Air Blower...
 
+<br />
+  
 You can then play an instrument with the default key bindings:
 | Note Name | C | D | E | F | G | H | I |
 | - | - | - | - | - | - | - | - |
@@ -24,12 +30,16 @@ You can then play an instrument with the default key bindings:
 | Lower | y | u | i | o | p | h | j |
 
 Press **"Shift"** to play **semitone**: C#, D#, F#, G#, A#
+
 Press **"Ctrl"** as the **soft padel**.
+
 Press **"Space"** as the **sustain padel**.
+
 Press **"Tab"** to switch to the **secondary key binding** scheme.
 
 Press **"ESC"** to **exit** playing mode.
-[A Demo Video](https://www.bilibili.com/video/BV1Qx4y117th/)
+
+[A Demo Video](Not Yet)
 
 ## Future Plans：
 1. ✅Introduce more stationary or portable instruments.
@@ -46,4 +56,6 @@ Press **"ESC"** to **exit** playing mode.
 4. [MirrorDecor](https://github.com/quackandcheese/MirrorDecor)(null)
 5. [EladsHUD](https://github.com/EladNLG/EladsHUD)(GPL-3.0 license)
 
-I' not entirely certain about the licensing, but I have studied their code superficially. Please let me know if there's anything I've overlooked or done incorrectly.
+I'm not entirely certain about the licensing, but I have studied their code superficially. 
+
+Please let me know if there's anything I've overlooked or done incorrectly.
