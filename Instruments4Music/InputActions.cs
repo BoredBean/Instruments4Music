@@ -88,7 +88,7 @@ namespace Instruments4Music
         public InputAction? MidFKey2 { get; set; }
         [InputAction("<Keyboard>/n", Name = "Mid G2", ActionId = "MidG2")]
         public InputAction? MidGKey2 { get; set; }
-        [InputAction("<Keyboard>/m1", Name = "Mid A2", ActionId = "MidA2")]
+        [InputAction("<Keyboard>/m", Name = "Mid A2", ActionId = "MidA2")]
         public InputAction? MidAKey2 { get; set; }
         [InputAction("<Keyboard>/comma", Name = "Mid B2", ActionId = "MidB2")]
         public InputAction? MidBKey2 { get; set; }
