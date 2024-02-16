@@ -53,6 +53,12 @@ namespace Instruments4Music
                 return true;
             }
 
+            var charger = instrumentObj.GetComponent<ItemCharger>();
+            if (charger != null)
+            {
+                return true;
+            }
+
             var obj = instrumentObj.GetComponent<AnimatedObjectTrigger>();
             if (obj != null)
             {
@@ -69,6 +75,13 @@ namespace Instruments4Music
             {
                 Instruments4MusicPlugin.AddLog($"Playing {horn.name}");
                 TuneAudioScript.RegisterInstrClip(instrumentObj, 8, horn.hornClose.clip, true);
+                return;
+            }
+            var charger = instrumentObj.GetComponent<ItemCharger>();
+            if (charger != null)
+            {
+                Instruments4MusicPlugin.AddLog($"Playing {charger.name}");
+                TuneAudioScript.RegisterInstrClip(instrumentObj, 8, charger.zapAudio.clip, false);
                 return;
             }
 
