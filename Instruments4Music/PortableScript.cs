@@ -62,12 +62,12 @@ namespace Instruments4Music
         {
             if (Player == null || TuneAudioScript.theShowIsOn || !IsHoldingInstrument(out var instrumentObj)) return;
 
-            var prop = instrumentObj?.GetComponent<NoisemakerProp>();
-            if (prop == null) return;
+            var obj = instrumentObj?.GetComponent<GrabbableObject>();
+            if (obj == null) return;
             var newText =
                 $"Showtime!: [{InputActions.GetButtonDescription(Instruments4MusicPlugin.inputActionsInstance.Showtime)}] (Hold)";
-            HUDManager.Instance.ChangeControlTipMultiple(prop.itemProperties.toolTips.AddToArray(newText), true,
-                prop.itemProperties);
+            HUDManager.Instance.ChangeControlTipMultiple(obj.itemProperties.toolTips.AddToArray(newText), true,
+                obj.itemProperties);
         }
     }
 }
