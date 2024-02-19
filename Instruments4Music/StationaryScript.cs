@@ -111,8 +111,11 @@ namespace Instruments4Music
                     clip = obj.secondaryAudios[0];
                 }
 
-                if (clip == null) return;
-                TuneAudioScript.RegisterInstrClip(instrumentObj, 17, clip, false);
+                if (clip != null)
+                {
+                    TuneAudioScript.RegisterInstrClip(instrumentObj, 17, clip, false);
+                    return;
+                }
             }
         }
 

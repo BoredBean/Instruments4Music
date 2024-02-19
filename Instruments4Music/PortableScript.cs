@@ -39,8 +39,11 @@ namespace Instruments4Music
                     clip = prop.noiseSFX[0];
                 }
 
-                if (clip == null) return;
-                TuneAudioScript.RegisterInstrClip(instrumentObj, 17, clip, false);
+                if (clip != null)
+                {
+                    TuneAudioScript.RegisterInstrClip(instrumentObj, 17, clip, false);
+                    return;
+                }
             }
 
             var obj = instrumentObj.GetComponent<GrabbableObject>();
@@ -52,9 +55,24 @@ namespace Instruments4Music
                 {
                     clip = obj.itemProperties.dropSFX;
                 }
+                else if (obj.itemProperties.grabSFX != null)
+                {
+                    clip = obj.itemProperties.grabSFX;
+                }
+                else if (obj.itemProperties.pocketSFX != null)
+                {
+                    clip = obj.itemProperties.pocketSFX;
+                }
+                else if (obj.itemProperties.throwSFX != null)
+                {
+                    clip = obj.itemProperties.throwSFX;
+                }
 
-                if (clip == null) return;
-                TuneAudioScript.RegisterInstrClip(instrumentObj, 17, clip, false);
+                if (clip != null)
+                {
+                    TuneAudioScript.RegisterInstrClip(instrumentObj, 17, clip, false);
+                    return;
+                }
             }
         }
 
