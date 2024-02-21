@@ -39,7 +39,7 @@ Press **"Tab"** to switch to the **secondary key binding** scheme.
 
 Press **"ESC"** to **exit** playing mode.
 
-[A Demo Video](Not Yet)
+[A Demo Video](https://www.bilibili.com/video/BV13r421s7rM)
 
 ## Future Plans：
 1. ✅Introduce more stationary or portable instruments.
