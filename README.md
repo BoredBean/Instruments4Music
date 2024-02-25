@@ -1,4 +1,4 @@
-﻿# Instruments4Music
+# Instruments4Music
 ## Introduction：
 This plugin aims to introduce some musical instruments to the Lethal Company. 
 
