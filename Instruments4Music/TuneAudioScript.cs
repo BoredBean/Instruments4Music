@@ -10,7 +10,8 @@ namespace Instruments4Music
     public class TuneAudioScript : MonoBehaviour
     {
         private const double TuneCoeff = 1.059463f;
-        static float lastTimer = 3.0f;
+        static float lastTimer = 3f;
+        static float attenuationCoeff = 2f;
         static float softModifier = 0.5f;
         static float sustainModifier = 4.0f;
 
@@ -22,6 +23,7 @@ namespace Instruments4Music
 
         public static bool theShowIsOn = false;
         public static bool secondaryKeyBind = false;
+        public static bool keyBindInit = false;
         public static string activeClipName = "";
         public static GameObject? activeInstrObject;
 
@@ -29,10 +31,14 @@ namespace Instruments4Music
 
         public static void RegisterInstrClip(GameObject gameObject, int sourceNoteNumber, AudioClip clip, bool isLoop)
         {
-            if (!InstrDictionary.ContainsKey(clip.name))
+            foreach (var tup in TunedDictionary)
             {
-                InstrDictionary.Add(clip.name, (clip, sourceNoteNumber, isLoop));
+                tup.Value?.Stop();
             }
+            TunedDictionary.Clear();
+            Instruments4MusicPlugin.AddLog($"TunedDictionary clear.");
+
+            InstrDictionary[clip.name] = (clip, sourceNoteNumber, isLoop);
 
             activeClipName = clip.name;
             activeInstrObject = gameObject;
@@ -76,7 +82,7 @@ namespace Instruments4Music
             }
 
             if (!InstrDictionary.TryGetValue(activeClipName, out var value)) return;
-            
+
             var clip = value.Item1;
             var sourceNoteNumber = value.Item2;
             var isLoop = value.Item3;
@@ -98,17 +104,17 @@ namespace Instruments4Music
             {
                 var timeLast = TimerDictionary[timerDictionaryKey];
                 if (TunedDictionary.TryGetValue(timerDictionaryKey, out var audioSource) && timeLast >= 0.0f &&
-                    audioSource.volume > 0.0f)
+                    audioSource.volume > 0.01f)
                 {
                     if (isSustain)
                     {
                         TimerDictionary[timerDictionaryKey] = timeLast - Time.deltaTime / sustainModifier;
-                        audioSource.volume -= Time.deltaTime / lastTimer/ sustainModifier; 
+                        audioSource.volume = (float)(audioSource.volume * Math.Exp(-attenuationCoeff * Time.deltaTime / sustainModifier));
                     }
                     else
                     {
                         TimerDictionary[timerDictionaryKey] = timeLast - Time.deltaTime;
-                        audioSource.volume -= Time.deltaTime / lastTimer;
+                        audioSource.volume = (float)(audioSource.volume * Math.Exp(-attenuationCoeff * Time.deltaTime));
                     }
                 }
                 else
@@ -142,10 +148,22 @@ namespace Instruments4Music
                 Debug.LogError((object)$"Error while unsubscribing from input in PlayerController!: {(object)ex}");
             }
         }
-        
+
         public void Awake()
         {
+
+            InstrDictionary = [];
+            TunedDictionary = [];
+
+            TimerDictionary = new();
+
+            theShowIsOn = false;
+            secondaryKeyBind = false;
+            activeClipName = "";
+
+            if (keyBindInit) return;
             SetupKeyBindCallbacks();
+            keyBindInit = !keyBindInit;
         }
 
         public void SetupKeyBindCallbacks()
@@ -204,6 +222,9 @@ namespace Instruments4Music
 
         public void Update()
         {
+            var isSustain = Instruments4MusicPlugin.inputActionsInstance.Sustain.ReadValue<float>() > 0.5f;
+            AudioCountDown(isSustain);
+
             if (!theShowIsOn) return;
             var semiTone = 0;
             var isSoft = Instruments4MusicPlugin.inputActionsInstance.Soft.ReadValue<float>() > 0.5f;
@@ -302,7 +323,7 @@ namespace Instruments4Music
                 PlayTunedAudio(24 + semiTone, isSoft, key.triggered);
             }
 
-            if(!secondaryKeyBind)
+            if (!secondaryKeyBind)
             {
                 key = Instruments4MusicPlugin.inputActionsInstance.HighDKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
@@ -341,8 +362,6 @@ namespace Instruments4Music
                 }
             }
 
-            var isSustain = Instruments4MusicPlugin.inputActionsInstance.Sustain.ReadValue<float>() > 0.5f;
-            AudioCountDown(isSustain);
             MusicHUD.instance.OnMenuClicked(1, isSoft);
             MusicHUD.instance.OnMenuClicked(2, semiTone == 1);
             MusicHUD.instance.OnMenuClicked(3, isSustain);

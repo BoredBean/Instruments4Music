@@ -31,6 +31,12 @@ public class MusicHUD : MonoBehaviour
         GameObject hud = Instruments4MusicPlugin.instance.hudInstance;
         Button[] buttons = hud.GetComponentsInChildren<Button>();
         Image[] frameImages = Instruments4MusicPlugin.instance.hudManager.itemSlotIconFrames;
+        Instruments4MusicPlugin.AddLog("Draw MusicHUD");
+        frameRectangles.Clear();
+        textRectangles.Clear();
+        buttonTips.Clear();
+        menuRectangles.Clear();
+        menuTips.Clear();
         foreach (Button button in buttons)
         {
             RectTransform buttonRectTransform = button.GetComponent<RectTransform>();
@@ -162,6 +168,7 @@ public class MusicHUD : MonoBehaviour
         inputTextRectTransform.offsetMax = new Vector2(-10, -10);
 
         inputField.textComponent = inputText;
+        Instruments4MusicPlugin.AddLog("Draw MusicHUD success");
     }
 
     public static void ShowUserInterface()
@@ -185,6 +192,7 @@ public class MusicHUD : MonoBehaviour
     public static void UpdateButtonTips()
     {
         string[] tipStrings;
+        Instruments4MusicPlugin.AddLog("Load key binds");
         if (!TuneAudioScript.secondaryKeyBind)
         {
             tipStrings =
@@ -244,6 +252,7 @@ public class MusicHUD : MonoBehaviour
         {
             buttonTips[i].text = tipStrings[i];
         }
+        Instruments4MusicPlugin.AddLog("Load key binds success");
     }
 
     public static void HideUserInterface()

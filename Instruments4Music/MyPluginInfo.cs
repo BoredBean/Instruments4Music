@@ -4,6 +4,6 @@ namespace Instruments4Music
     {
         public const string PLUGIN_GUID = "com.bean.Instruments4Music";
         public const string PLUGIN_NAME = "Instruments4Music";
-        public const string PLUGIN_VERSION = "1.0.0";
+        public const string PLUGIN_VERSION = "1.1.0";
     }
 }

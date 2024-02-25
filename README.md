@@ -9,7 +9,7 @@ This plugin utilizes [LethalCompany InputUtils](https://thunderstore.io/c/lethal
 **(Especially when you quit one room and then join another one.)**
 
 ## How to use:
-Aim at a possible stationary instrument or holding a portable instrument and press **"LeftAlt"** for **2 seconds**.
+Aim at a possible stationary instrument or holding a portable instrument and press **"BackSpace"** for **2 seconds**.
 
 Possible stationary instruments: Ship Horn, Light Switch, Pumpkin Head...
 
@@ -40,6 +40,8 @@ Press **"Tab"** to switch to the **secondary key binding** scheme.
 Press **"ESC"** to **exit** playing mode.
 
 [A Demo Video](https://www.bilibili.com/video/BV13r421s7rM)
+
+[A Demo Bad Apple](https://www.bilibili.com/video/BV17z421R7CB)
 
 ## Future Plans：
 1. ✅Introduce more stationary or portable instruments.

@@ -1,16 +1,11 @@
-﻿using System.Collections.Generic;
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using GameNetcodeStuff;
 using HarmonyLib;
 using Jotunn.Utils;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
-using UnityEngine.Assertions;
-using UnityEngine.InputSystem.HID;
-using UnityEngine.SceneManagement;
-using UnityEngine.TextCore.Text;
 
 namespace Instruments4Music
 {
@@ -52,7 +47,6 @@ namespace Instruments4Music
 
             logger = this.Logger;
 
-            SceneManager.sceneLoaded += OnSceneLoaded;
             // Plugin startup logic
             AddLog($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
@@ -62,29 +56,40 @@ namespace Instruments4Music
 
             harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
+    }
 
-        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    [HarmonyPatch(typeof(StartOfRound))]
+    internal class StartOfRoundPatch
+    {
+        [HarmonyPatch("Start")]
+        [HarmonyPostfix]
+        static void StartPatch(ref StartOfRound __instance)
         {
-            var obj = StartOfRound.Instance?.mapScreen?.mesh.gameObject;
+
+            var obj = __instance.mapScreen?.mesh?.gameObject;
             if (obj == null) return;
             if (obj.GetComponent<StationaryScript>() == null)
             {
                 obj.AddComponent<StationaryScript>();
+                Instruments4MusicPlugin.AddLog("StationaryScript Added");
             }
 
             if (obj.GetComponent<PortableScript>() == null)
             {
                 obj.AddComponent<PortableScript>();
+                Instruments4MusicPlugin.AddLog("PortableScript Added");
             }
 
             if (obj.GetComponent<TuneAudioScript>() == null)
             {
                 obj.AddComponent<TuneAudioScript>();
+                Instruments4MusicPlugin.AddLog("TuneAudioScript Added");
             }
 
             if (obj.GetComponent<MusicHUD>() == null)
             {
                 obj.AddComponent<MusicHUD>();
+                Instruments4MusicPlugin.AddLog("MusicHUD Added");
             }
         }
     }
@@ -103,6 +108,7 @@ namespace Instruments4Music
             var HUD = Object.Instantiate(Instruments4MusicPlugin.instance.hudPrefab, elements[0].canvasGroup.transform.parent);
             Instruments4MusicPlugin.instance.hudInstance = HUD;
             HUD.transform.localScale = new Vector3(1f, 1f, 1f)* Instruments4MusicPlugin.instance.hudScale;
+            Instruments4MusicPlugin.AddLog("MusicHUD Instantiated");
 
             HUDElement newElement = new();
             Instruments4MusicPlugin.instance.hudElement = newElement;

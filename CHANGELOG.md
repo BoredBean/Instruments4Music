@@ -7,3 +7,9 @@
 2. Implement a user interface for playing music.
 3. Introduced functionalities for semitones, sustain pedal, and soft pedal.
 4. Implemented a secondary set of key bindings.
+### Release v1.1.0
+1. Fixed an issue where sound continued to play after exiting performance mode.
+2. Fixed an issue where the mod became inactive when rejoining a room after leaving.
+3. Implemented volume decay using an exponential function.(more scientific)
+4. Added the Whoopie Cushion.
+5. Changed the default key for starting a performance to backspace.

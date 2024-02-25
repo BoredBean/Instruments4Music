@@ -6,7 +6,7 @@ namespace Instruments4Music
 {
     public class InputActions : LcInputActions
     {
-        [InputAction("<Keyboard>/leftAlt", Name = "Showtime!", ActionId = "Showtime", KbmInteractions = "hold(duration = 2)")]
+        [InputAction("<Keyboard>/backspace", Name = "Showtime!", ActionId = "Showtime", KbmInteractions = "hold(duration = 2)")]
         public InputAction? Showtime { get; set; }
         [InputAction("<Keyboard>/escape", Name = "Curtain Call", ActionId = "CurtainCall")]
         public InputAction? CurtainCall { get; set; }
@@ -84,15 +84,15 @@ namespace Instruments4Music
         public InputAction? MidDKey2 { get; set; }
         [InputAction("<Keyboard>/semicolon", Name = "Mid E2", ActionId = "MidE2")]
         public InputAction? MidEKey2 { get; set; }
-        [InputAction("<Keyboard>/b", Name = "Mid F2", ActionId = "MidF2")]
+        [InputAction("<Keyboard>/n", Name = "Mid F2", ActionId = "MidF2")]
         public InputAction? MidFKey2 { get; set; }
-        [InputAction("<Keyboard>/n", Name = "Mid G2", ActionId = "MidG2")]
+        [InputAction("<Keyboard>/m", Name = "Mid G2", ActionId = "MidG2")]
         public InputAction? MidGKey2 { get; set; }
-        [InputAction("<Keyboard>/m", Name = "Mid A2", ActionId = "MidA2")]
+        [InputAction("<Keyboard>/comma", Name = "Mid A2", ActionId = "MidA2")]
         public InputAction? MidAKey2 { get; set; }
-        [InputAction("<Keyboard>/comma", Name = "Mid B2", ActionId = "MidB2")]
+        [InputAction("<Keyboard>/period", Name = "Mid B2", ActionId = "MidB2")]
         public InputAction? MidBKey2 { get; set; }
-        [InputAction("<Keyboard>/period", Name = "High C2", ActionId = "HighC2")]
+        [InputAction("<Keyboard>/slash", Name = "High C2", ActionId = "HighC2")]
         public InputAction? HighCKey2 { get; set; }
 
         public static string GetButtonDescription(InputAction action)
