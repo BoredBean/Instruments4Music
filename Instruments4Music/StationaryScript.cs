@@ -74,14 +74,14 @@ namespace Instruments4Music
             if (horn != null)
             {
                 Instruments4MusicPlugin.AddLog($"Playing {horn.name}");
-                TuneAudioScript.RegisterInstrClip(instrumentObj, 8, horn.hornClose.clip, true);
+                TuneAudioScript.RegisterInstrClip(instrumentObj, InstrumentsConfig.AlarmHornBasePitch.Value, horn.hornClose.clip, InstrumentsConfig.AlarmHornLoop.Value);
                 return;
             }
             var charger = instrumentObj.GetComponent<ItemCharger>();
             if (charger != null)
             {
                 Instruments4MusicPlugin.AddLog($"Playing {charger.name}");
-                TuneAudioScript.RegisterInstrClip(instrumentObj, 8, charger.zapAudio.clip, false);
+                TuneAudioScript.RegisterInstrClip(instrumentObj, InstrumentsConfig.StationaryPitch.Value, charger.zapAudio.clip, InstrumentsConfig.StationaryLoop.Value);
                 return;
             }
 
@@ -90,6 +90,33 @@ namespace Instruments4Music
             {
                 Instruments4MusicPlugin.AddLog($"Playing {obj.name}");
                 AudioClip? clip = default;
+                if(InstrumentsConfig.StationaryAudio.Value == 0)
+                {
+                    clip = obj.thisAudioSource.clip;
+                }
+                else if(InstrumentsConfig.StationaryAudio.Value == 1)
+                {
+                    clip = obj.playWhileTrue;
+                }
+                else if (InstrumentsConfig.StationaryAudio.Value == 2)
+                {
+                    clip = obj.boolTrueAudios[0];
+                }
+                else if (InstrumentsConfig.StationaryAudio.Value == 3)
+                {
+                    clip = obj.boolFalseAudios[0];
+                }
+                else if (InstrumentsConfig.StationaryAudio.Value == 4)
+                {
+                    clip = obj.secondaryAudios[0];
+
+                }
+                if (clip != null)
+                {
+                    TuneAudioScript.RegisterInstrClip(instrumentObj, InstrumentsConfig.StationaryPitch.Value, clip, InstrumentsConfig.StationaryLoop.Value);
+                    return;
+                }
+
                 if (obj.thisAudioSource.clip != null)
                 {
                     clip = obj.thisAudioSource.clip;
@@ -110,10 +137,9 @@ namespace Instruments4Music
                 {
                     clip = obj.secondaryAudios[0];
                 }
-
                 if (clip != null)
                 {
-                    TuneAudioScript.RegisterInstrClip(instrumentObj, 17, clip, false);
+                    TuneAudioScript.RegisterInstrClip(instrumentObj, InstrumentsConfig.StationaryPitch.Value, clip, InstrumentsConfig.StationaryLoop.Value);
                     return;
                 }
             }

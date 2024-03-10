@@ -18,6 +18,7 @@ namespace Instruments4Music
 
         internal static ManualLogSource? logger;
         public static ConfigFile? config;
+        public static InstrumentsConfig configInstance;
 
         internal static InputActions inputActionsInstance = new();
         public AssetBundle assets;
@@ -46,6 +47,10 @@ namespace Instruments4Music
             instance = this;
 
             logger = this.Logger;
+
+            config = this.Config;
+
+            InstrumentsConfig.Load();
 
             // Plugin startup logic
             AddLog($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
@@ -107,7 +112,7 @@ namespace Instruments4Music
 
             var HUD = Object.Instantiate(Instruments4MusicPlugin.instance.hudPrefab, elements[0].canvasGroup.transform.parent);
             Instruments4MusicPlugin.instance.hudInstance = HUD;
-            HUD.transform.localScale = new Vector3(1f, 1f, 1f)* Instruments4MusicPlugin.instance.hudScale;
+            HUD.transform.localScale = new Vector3(1f, 1f, 1f) * InstrumentsConfig.ConfigHUDScale.Value;
             Instruments4MusicPlugin.AddLog("MusicHUD Instantiated");
 
             HUDElement newElement = new();

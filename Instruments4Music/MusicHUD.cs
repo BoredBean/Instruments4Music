@@ -1,4 +1,5 @@
 ﻿using Instruments4Music;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -28,6 +29,7 @@ public class MusicHUD : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        var transparency = InstrumentsConfig.ConfigHUDTransparency.Value;
         GameObject hud = Instruments4MusicPlugin.instance.hudInstance;
         Button[] buttons = hud.GetComponentsInChildren<Button>();
         Image[] frameImages = Instruments4MusicPlugin.instance.hudManager.itemSlotIconFrames;
@@ -41,14 +43,14 @@ public class MusicHUD : MonoBehaviour
         {
             RectTransform buttonRectTransform = button.GetComponent<RectTransform>();
 
-            int randomIndex = Random.Range(0, frameImages.Length);
+            int randomIndex = UnityEngine.Random.Range(0, frameImages.Length);
             Image imageToDisplay = frameImages[randomIndex];
 
             GameObject frameRectangle = new GameObject("FrameRectangle");
             frameRectangle.transform.SetParent(button.transform, false);
 
             Image frameImage = frameRectangle.AddComponent<Image>();
-            frameImage.color = new Color32(0xFE, 0x49, 0x00, 0xFF);
+            frameImage.color = new Color32(0xFE, 0x49, 0x00, (byte)Math.Round(transparency * 0xFF));
             frameImage.sprite = imageToDisplay.sprite;
 
             RectTransform frameRectTransform = frameRectangle.GetComponent<RectTransform>();
@@ -63,7 +65,7 @@ public class MusicHUD : MonoBehaviour
             textRectangle.transform.SetParent(button.transform, false);
 
             Image textImage = textRectangle.AddComponent<Image>();
-            textImage.color = new Color32(0xFE, 0x49, 0x00, 0x80);
+            textImage.color = new Color32(0xFE, 0x49, 0x00, (byte)Math.Round(transparency * 0xFF));
 
             RectTransform textRectTransform = textRectangle.GetComponent<RectTransform>();
 
@@ -123,7 +125,7 @@ public class MusicHUD : MonoBehaviour
             Text menuText = menuTip.AddComponent<Text>();
             menuText.fontSize = (int)(0.04f * parentRectTransform.rect.height);
             menuText.text = "Text";
-            menuText.color = new Color(1, 1, 1, 0.5f);
+            menuText.color = new Color(1, 1, 1, transparency);
             menuText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
             menuText.alignment = TextAnchor.MiddleCenter;
 
@@ -141,7 +143,7 @@ public class MusicHUD : MonoBehaviour
         inputFieldObject.transform.SetParent(hud.transform, false);
 
         Image borderImage = inputFieldObject.AddComponent<Image>();
-        borderImage.color = new Color32(0xFE, 0x49, 0x00, 0x50);
+        borderImage.color = new Color32(0xFE, 0x49, 0x00, (byte)Math.Round(transparency * 0xFF));
 
         RectTransform inputRectTransform = inputFieldObject.GetComponent<RectTransform>();
         inputRectTransform.anchorMin = new Vector2(0.2f, 0.46f);
@@ -173,6 +175,7 @@ public class MusicHUD : MonoBehaviour
 
     public static void ShowUserInterface()
     {
+        var transparency = InstrumentsConfig.ConfigHUDTransparency.Value;
         UpdateButtonTips();
         menuTips[0].text =
             $"Quit: {InputActions.GetButtonDescription(Instruments4MusicPlugin.inputActionsInstance.CurtainCall)}";
@@ -186,7 +189,7 @@ public class MusicHUD : MonoBehaviour
             $"Switch: {InputActions.GetButtonDescription(Instruments4MusicPlugin.inputActionsInstance.ChangeMode)}";
 
         Instruments4MusicPlugin.instance.hudManager.PingHUDElement(Instruments4MusicPlugin.instance.hudElement, 0f, 0f,
-            1f);
+            transparency);
     }
 
     public static void UpdateButtonTips()

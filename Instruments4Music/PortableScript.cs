@@ -40,8 +40,8 @@ namespace Instruments4Music
             if (cushion != null)
             {
                 Instruments4MusicPlugin.AddLog($"Playing {cushion.name}");
-                TuneAudioScript.RegisterInstrClip(instrumentObj, 17,
-                    cushion.fartAudios[Random.Range(0, cushion.fartAudios.Length)], false);
+                TuneAudioScript.RegisterInstrClip(instrumentObj, InstrumentsConfig.PotablePitch.Value,
+                    cushion.fartAudios[Random.Range(0, cushion.fartAudios.Length)], InstrumentsConfig.PotableLoop.Value);
                 return;
             }
 
@@ -61,7 +61,7 @@ namespace Instruments4Music
 
                 if (clip != null)
                 {
-                    TuneAudioScript.RegisterInstrClip(instrumentObj, 17, clip, false);
+                    TuneAudioScript.RegisterInstrClip(instrumentObj, InstrumentsConfig.NoisyPropPitch.Value, clip, InstrumentsConfig.NoisyPropLoop.Value);
                     return;
                 }
             }
@@ -71,6 +71,28 @@ namespace Instruments4Music
             {
                 Instruments4MusicPlugin.AddLog($"Playing {obj.name}");
                 AudioClip? clip = default;
+                if (InstrumentsConfig.PotableAudio.Value == 0)
+                {
+                    clip = obj.itemProperties.dropSFX;
+                }
+                else if (InstrumentsConfig.PotableAudio.Value == 1)
+                {
+                    clip = obj.itemProperties.grabSFX;
+                }
+                else if (InstrumentsConfig.PotableAudio.Value == 2)
+                {
+                    clip = obj.itemProperties.pocketSFX;
+                }
+                else if (InstrumentsConfig.PotableAudio.Value == 3)
+                {
+                    clip = obj.itemProperties.throwSFX;
+                }
+                if (clip != null)
+                {
+                    TuneAudioScript.RegisterInstrClip(instrumentObj, InstrumentsConfig.PotablePitch.Value, clip, InstrumentsConfig.PotableLoop.Value);
+                    return;
+                }
+
                 if (obj.itemProperties.dropSFX != null)
                 {
                     clip = obj.itemProperties.dropSFX;
@@ -87,10 +109,9 @@ namespace Instruments4Music
                 {
                     clip = obj.itemProperties.throwSFX;
                 }
-
                 if (clip != null)
                 {
-                    TuneAudioScript.RegisterInstrClip(instrumentObj, 17, clip, false);
+                    TuneAudioScript.RegisterInstrClip(instrumentObj, InstrumentsConfig.PotablePitch.Value, clip, InstrumentsConfig.PotableLoop.Value);
                     return;
                 }
             }
