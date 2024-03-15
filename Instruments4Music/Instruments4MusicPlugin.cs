@@ -6,6 +6,7 @@ using Jotunn.Utils;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace Instruments4Music
 {
@@ -30,6 +31,7 @@ namespace Instruments4Music
         public GameObject hudInstance;
         public HUDManager hudManager;
         public HUDElement hudElement;
+        public AudioMixer tuneMixer;
 
         public float hudScale = 0.45f;
 
@@ -56,8 +58,9 @@ namespace Instruments4Music
             AddLog($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
             // load hud
-            assets = AssetUtils.LoadAssetBundleFromResources("musichud", typeof(HUDPatches).Assembly);
+            assets = AssetUtils.LoadAssetBundleFromResources("instrumentassets", typeof(Instruments4MusicPlugin).Assembly);
             hudPrefab = assets.LoadAsset<GameObject>("MusicPanel");
+            tuneMixer = assets.LoadAsset<AudioMixer>("Tuner");
 
             harmony.PatchAll(Assembly.GetExecutingAssembly());
         }

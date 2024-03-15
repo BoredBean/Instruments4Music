@@ -11,10 +11,10 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="musichud" />
+    <None Remove="instrumentassets" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="musichud" />
+    <EmbeddedResource Include="instrumentassets" />
   </ItemGroup>
 
   <ItemGroup>

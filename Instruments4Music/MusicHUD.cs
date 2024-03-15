@@ -29,7 +29,7 @@ public class MusicHUD : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        var transparency = InstrumentsConfig.ConfigHUDTransparency.Value;
+        var transparency = (InstrumentsConfig.ConfigHUDTransparency == null) ? 1.0f : InstrumentsConfig.ConfigHUDTransparency.Value;
         GameObject hud = Instruments4MusicPlugin.instance.hudInstance;
         Button[] buttons = hud.GetComponentsInChildren<Button>();
         Image[] frameImages = Instruments4MusicPlugin.instance.hudManager.itemSlotIconFrames;
@@ -160,8 +160,8 @@ public class MusicHUD : MonoBehaviour
         Text inputText = textObject.AddComponent<Text>();
         inputField.text = "Press Enter to input music note...";
         inputText.color = Color.white;
-        inputText.font = Resources.GetBuiltinResource<Font>("Arial.ttf"); 
-        
+        inputText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+
         RectTransform inputTextRectTransform = textObject.GetComponent<RectTransform>();
 
         inputTextRectTransform.anchorMin = new Vector2(0, 0);
@@ -339,6 +339,7 @@ public class MusicHUD : MonoBehaviour
             inputField.DeactivateInputField();
             isInputing = false;
             Instruments4MusicPlugin.AddLog($"Input stop, get note: {inputField.text}.");
+            TuneAudioScript.StartAutoPlay(inputField.text);
         }
         else
         {

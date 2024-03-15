@@ -1,10 +1,13 @@
 ﻿using GameNetcodeStuff;
+using HarmonyLib;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.InputSystem;
 using static Unity.Audio.Handle;
 
@@ -12,7 +15,7 @@ namespace Instruments4Music
 {
     public class TuneAudioScript : MonoBehaviour
     {
-        private const double TuneCoeff = 1.059463f;
+        private const double TuneCoeff = 1.0594631f;
         static float lastTimer = InstrumentsConfig.TuneLastTime.Value;
         static float attenuationCoeff = InstrumentsConfig.VolumeAttenuationCoeff.Value;
         static float softModifier = InstrumentsConfig.SoftTuneModifier.Value;
@@ -57,19 +60,19 @@ namespace Instruments4Music
             MusicHUD.ShowUserInterface();
             Instruments4MusicPlugin.AddLog($"Playing {activeClipName}.");
 
-            StartAutoPlay("2.7,01030,,,,030,,,,032,,,,042,,,,0b030,,,,030,,,,030,,,," +
-                "010,,020,,0a030,,,,030,,,,032,,,,042,,,,0g052,,,,040,,,,030,,,,020,,,," +
-                "0f010,,,,010,,,,010,,,,022,,,,0e010,,,,010,,,,010,,,,050,,,," +
-                "0d010,,,,010,,020,,030,,020,,010,,,,0g010,,,,010,,020,,030,,020,,010,,020,," +
-                "0c030,,0g0,,0e030,,0g0,,0c032,,0g0,,0d042,,0g0,,0b030,,0g0,,0d030,,0g0,,0b030,,0g0,," +
-                "0c010,,020,,0a030,,0e0g0,,0c030,,0g0,,0a032,,0e0g0,,0c032,,040,,0g052,,0e0g0,,0c010,,0e0g0,,0g050,,040,,0c030,,0e020,," +
-                "0f010,,0c0g0,,0a010,,0c0g0,,0f010,,0c0g0,,0a052,,0c0g0,,0e0C0,,0c010,,0g050,,0c040,,0e030,,020,,0g010,,0c0g0,," +
-                "0d010,,0c0g0,,0f010,,0a020,,0d030,,020,,0f010,,0c0g0,,0g010,,0c0g0,,0c010,,0f050,,0g040,,030,,0b020,,,," +
-                "0c030,,0g0,,0e030,,0c0g0,,0c032,,0c0g0,,0f042,,0g0,,0b030,,0c0g0,,0d030,,0c0g0,,0e030,,0d0g0,," +
-                "0g010,,0d020,,0a030,,0e0a0,,0c030,,0e0a0,,0a032,,0e0a0,,0d042,,0e0a0,,0g052,,0c010,,0a0C0,,0f0,,0c050,,040,,0e030,,0d020,," +
-                "0f010,,0c0g0,,0f010,,0c0g0,,0g010,,0c0g0,,0a052,,,,0e0C0,,0d0,,0g050,,0c040,,0e030,,020,,0g010,,0c0g0,," +
-                "0d010,,0c0g0,,0f010,,0a020,,0d030,,020,,010,,0g0,,0g010,,0c0g0,,0c010,,0g050,,0f040,,0e033,,0c024,,,,,," +
-                "0c017,,0g0,,,,2g0,,,,2g0,,,,,,0c0");
+            //StartAutoPlay("2.7,01030,,,,030,,,,032,,,,042,,,,0b030,,,,030,,,,030,,,," +
+            //    "010,,020,,0a030,,,,030,,,,032,,,,042,,,,0g052,,,,040,,,,030,,,,020,,,," +
+            //    "0f010,,,,010,,,,010,,,,022,,,,0e010,,,,010,,,,010,,,,050,,,," +
+            //    "0d010,,,,010,,020,,030,,020,,010,,,,0g010,,,,010,,020,,030,,020,,010,,020,," +
+            //    "0c030,,0g0,,0e030,,0g0,,0c032,,0g0,,0d042,,0g0,,0b030,,0g0,,0d030,,0g0,,0b030,,0g0,," +
+            //    "0c010,,020,,0a030,,0e0g0,,0c030,,0g0,,0a032,,0e0g0,,0c032,,040,,0g052,,0e0g0,,0c010,,0e0g0,,0g050,,040,,0c030,,0e020,," +
+            //    "0f010,,0c0g0,,0a010,,0c0g0,,0f010,,0c0g0,,0a052,,0c0g0,,0e0C0,,0c010,,0g050,,0c040,,0e030,,020,,0g010,,0c0g0,," +
+            //    "0d010,,0c0g0,,0f010,,0a020,,0d030,,020,,0f010,,0c0g0,,0g010,,0c0g0,,0c010,,0f050,,0g040,,030,,0b020,,,," +
+            //    "0c030,,0g0,,0e030,,0c0g0,,0c032,,0c0g0,,0f042,,0g0,,0b030,,0c0g0,,0d030,,0c0g0,,0e030,,0d0g0,," +
+            //    "0g010,,0d020,,0a030,,0e0a0,,0c030,,0e0a0,,0a032,,0e0a0,,0d042,,0e0a0,,0g052,,0c010,,0a0C0,,0f0,,0c050,,040,,0e030,,0d020,," +
+            //    "0f010,,0c0g0,,0f010,,0c0g0,,0g010,,0c0g0,,0a052,,,,0e0C0,,0d0,,0g050,,0c040,,0e030,,020,,0g010,,0c0g0,," +
+            //    "0d010,,0c0g0,,0f010,,0a020,,0d030,,020,,010,,0g0,,0g010,,0c0g0,,0c010,,0g050,,0f040,,0e033,,0c024,,,,,," +
+            //    "0c017,,0g0,,,,2g0,,,,2g0,,,,,,0c0");
         }
 
         public static void DeActiveInstrument()
@@ -111,12 +114,15 @@ namespace Instruments4Music
             var isLoop = value.Item3;
             var power = targetNoteNumber - sourceNoteNumber;
 
-            audioSource = activeInstrObject?.AddComponent<AudioSource>();
+            audioSource = Player?.GetComponent<Transform>()?.gameObject?.AddComponent<AudioSource>();
             if (audioSource == null) return;
+            Instruments4MusicPlugin.AddLog($"Apply tune mixer group Tune{power}.");
+            audioSource.outputAudioMixerGroup = Instruments4MusicPlugin.instance.tuneMixer.FindMatchingGroups($"Tune{power}")[0];
+            //audioSource.pitch = (float)Math.Pow(TuneCoeff, power);
             audioSource.clip = clip;
-            audioSource.pitch = (float)Math.Pow(TuneCoeff, power);
             audioSource.volume = volume;
             audioSource.loop = isLoop;
+            audioSource.spatialBlend = 0.5f;
             TunedDictionary.Add((activeClipName, targetNoteNumber), audioSource);
             audioSource.Play();
         }
@@ -126,16 +132,16 @@ namespace Instruments4Music
             isAutoPlayOn = false;
             if (!theShowIsOn) return;
 
-            int[] lowerCaseMapping = { 9, 11, 0, 2, 4, 5, 7 };
-            int[] digitMapping = { 12, 14, 16, 17, 19, 21, 23 };
-            int[] upperCaseMapping = { 33, 35, 24, 26, 28, 29, 31 };
+            int[] lowerCaseMapping = [9, 11, 0, 2, 4, 5, 7];
+            int[] digitMapping = [12, 14, 16, 17, 19, 21, 23];
+            int[] upperCaseMapping = [33, 35, 24, 26, 28, 29, 31];
 
             string[] noteArray = Regex.Replace(musicNotes, @"\s", "").Split(',');
-            int maxKeep = 0;
+            var maxKeep = 0;
             tuneList.Clear();
 
             if (noteArray.Length < 2 || !float.TryParse(noteArray[0], out autoPlaySpeed)) return;
-            for (int i = 1; i < noteArray.Length; i++)
+            for (var i = 1; i < noteArray.Length; i++)
             {
                 var subList = new List<(int, bool, int)>();
                 if (noteArray[i].Length % 2 != 1 || noteArray[i].Length < 2)
@@ -143,40 +149,41 @@ namespace Instruments4Music
                     tuneList.Add(subList);
                     continue;
                 }
-                char param = noteArray[i][0];
-                if (!char.IsDigit(param) && (param < 'A' || param > 'F') && (param < 'a' || param > 'f'))
+                var param = noteArray[i][0];
+                if (!char.IsDigit(param) && param is (< 'A' or > 'F') and (< 'a' or > 'f'))
                 {
                     tuneList.Add(subList);
                     continue;
                 }
-                int paramHex = Convert.ToInt32(param.ToString(), 16);
+                var paramHex = Convert.ToInt32(param.ToString(), 16);
 
                 isSustaining = (paramHex & 0x1) != 0;
-                bool isSoft = (paramHex & 0x2) != 0;
+                var isSoft = (paramHex & 0x2) != 0;
 
-                for (int j = 1; j < noteArray[i].Length; j += 2)
+                for (var j = 1; j < noteArray[i].Length; j += 2)
                 {
-                    char noteChar = noteArray[i][j];
+                    var noteChar = noteArray[i][j];
                     int noteNumber;
-                    if (noteChar >= 'a' && noteChar <= 'g')
+                    switch (noteChar)
                     {
-                        noteNumber = lowerCaseMapping[noteChar - 'a'];
+                        case >= 'a' and <= 'g':
+                            noteNumber = lowerCaseMapping[noteChar - 'a'];
+                            break;
+                        case >= '1' and <= '7':
+                            noteNumber = digitMapping[noteChar - '1'];
+                            break;
+                        case >= 'A' and <= 'G':
+                            noteNumber = upperCaseMapping[noteChar - 'A'];
+                            break;
+                        default:
+                            continue;
                     }
-                    else if (noteChar >= '1' && noteChar <= '7')
-                    {
-                        noteNumber = digitMapping[noteChar - '1'];
-                    }
-                    else if (noteChar >= 'A' && noteChar <= 'G')
-                    {
-                        noteNumber = upperCaseMapping[noteChar - 'A'];
-                    }
-                    else { continue; }
 
-                    char modifierChar = noteArray[i][j + 1];
-                    if (!char.IsDigit(modifierChar) && (modifierChar < 'A' || modifierChar > 'F') && (modifierChar < 'a' || modifierChar > 'f')) continue;
+                    var modifierChar = noteArray[i][j + 1];
+                    if (!char.IsDigit(modifierChar) && modifierChar is (< 'A' or > 'F') and (< 'a' or > 'f')) continue;
 
                     noteNumber += (modifierChar >= '8') ? 1 : 0;
-                    int keep = Convert.ToInt32(modifierChar.ToString(), 16) & 0x7;
+                    var keep = Convert.ToInt32(modifierChar.ToString(), 16) & 0x7;
                     maxKeep = keep > maxKeep ? keep : maxKeep;
                     subList.Add((noteNumber, isSoft, keep));
                     Instruments4MusicPlugin.AddLog($"set ({i},{j}) {noteNumber} {isSoft} {keep}");
@@ -186,7 +193,7 @@ namespace Instruments4Music
 
             autoPlayCount = 0;
             keepTuneList.Clear();
-            for (int i = 0; i < tuneList.Count + maxKeep; i++)
+            for (var i = 0; i < tuneList.Count + maxKeep; i++)
             {
                 keepTuneList.Add([]);
             }
@@ -198,8 +205,8 @@ namespace Instruments4Music
         {
             if (!isAutoPlayOn) return;
             autoPlayCount += Time.deltaTime;
-            int num = (int)(autoPlayCount / 0.5f * autoPlaySpeed);
-            num = num - 30;
+            var num = (int)(autoPlayCount / 0.5f * autoPlaySpeed);
+            //num = num - 30;
             if (num < 0) return;
             if (num >= tuneList.Count)
             {
@@ -211,13 +218,13 @@ namespace Instruments4Music
             {
                 var (noteNumber, isSoft, keep) = tuple;
                 Instruments4MusicPlugin.AddLog($"get {noteNumber} {isSoft} {keep}");
-                if (!keepTuneList[num].Any(tup => tup.Item1 == noteNumber))
+                if (keepTuneList[num].All(tup => tup.Item1 != noteNumber))
                 {
                     Instruments4MusicPlugin.AddLog($"play {num}");
                     PlayTunedAudio(noteNumber, isSoft, true);
                     keepTuneList[num].Add((noteNumber, isSoft, 0));
                 }
-                if (keep > 0 && !tuneList[num + 1].Any(tup => tup.Item1 == noteNumber) && !keepTuneList[num + 1].Any(tup => tup.Item1 == noteNumber))
+                if (keep > 0 && tuneList[num + 1].All(tup => tup.Item1 != noteNumber) && keepTuneList[num + 1].All(tup => tup.Item1 != noteNumber))
                 {
                     keepTuneList[num + 1].Add((noteNumber, isSoft, keep - 1));
                 }
@@ -227,7 +234,7 @@ namespace Instruments4Music
             {
                 var (noteNumber, isSoft, keep) = tuple;
                 PlayTunedAudio(noteNumber, isSoft, false);
-                if (keep > 0 && !tuneList[num + 1].Any(tup => tup.Item1 == noteNumber) && !keepTuneList[num + 1].Any(tup => tup.Item1 == noteNumber))
+                if (keep > 0 && tuneList[num + 1].All(tup => tup.Item1 != noteNumber) && keepTuneList[num + 1].All(tup => tup.Item1 != noteNumber))
                 {
                     keepTuneList[num + 1].Add((noteNumber, isSoft, keep - 1));
                 }
@@ -265,7 +272,7 @@ namespace Instruments4Music
         {
             try
             {
-                Player.playerActions.Movement.Enable();
+                Player?.playerActions.Movement.Enable();
             }
             catch (Exception ex)
             {
@@ -277,7 +284,7 @@ namespace Instruments4Music
         {
             try
             {
-                Player.playerActions.Movement.Enable();
+                Player?.playerActions.Movement.Enable();
             }
             catch (Exception ex)
             {
@@ -291,7 +298,7 @@ namespace Instruments4Music
             InstrDictionary = [];
             TunedDictionary = [];
 
-            TimerDictionary = new();
+            TimerDictionary = new ConcurrentDictionary<(string, int), float>();
 
             theShowIsOn = false;
             secondaryKeyBind = false;
