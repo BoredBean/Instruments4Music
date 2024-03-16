@@ -1,9 +1,6 @@
-﻿using System;
-using System.Reflection;
+﻿using GameNetcodeStuff;
 using System.Text.RegularExpressions;
-using GameNetcodeStuff;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Instruments4Music
 {
@@ -147,9 +144,9 @@ namespace Instruments4Music
 
         public void Update()
         {
-            if (TuneAudioScript.theShowIsOn || !IsLookingAtInstrument(out var instrumentObj) || Player == null) return;
+            if (TuneAudioScript.TheShowIsOn || !IsLookingAtInstrument(out var instrumentObj) || Player == null) return;
             var newText =
-                $"Showtime!: [{InputActions.GetButtonDescription(Instruments4MusicPlugin.inputActionsInstance.Showtime)}] (Hold)";
+                $"Showtime!: [{InputActions.GetButtonDescription(Instruments4MusicPlugin.InputActionsInstance.Showtime)}] (Hold)";
 
             var trigger = instrumentObj?.GetComponent<InteractTrigger>();
 

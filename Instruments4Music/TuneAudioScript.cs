@@ -1,64 +1,65 @@
 ﻿using GameNetcodeStuff;
-using HarmonyLib;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using UnityEngine.Audio;
 using UnityEngine.InputSystem;
-using static Unity.Audio.Handle;
 
 namespace Instruments4Music
 {
     public class TuneAudioScript : MonoBehaviour
     {
         private const double TuneCoeff = 1.0594631f;
-        static float lastTimer = InstrumentsConfig.TuneLastTime.Value;
-        static float attenuationCoeff = InstrumentsConfig.VolumeAttenuationCoeff.Value;
-        static float softModifier = InstrumentsConfig.SoftTuneModifier.Value;
-        static float sustainModifier = InstrumentsConfig.SustainTuneModifier.Value;
+        private static readonly float LastTimer = (InstrumentsConfig.TuneLastTime?.Value != null) ? InstrumentsConfig.TuneLastTime.Value : 3.0f;
+        public static readonly float AttenuationCoeff = (InstrumentsConfig.VolumeAttenuationCoeff?.Value != null) ? InstrumentsConfig.VolumeAttenuationCoeff.Value : 2.0f;
+        public static readonly float SoftModifier = (InstrumentsConfig.SoftTuneModifier?.Value != null) ? InstrumentsConfig.SoftTuneModifier.Value : 0.5f;
+        private static readonly float SustainModifier = (InstrumentsConfig.SustainTuneModifier?.Value != null) ? InstrumentsConfig.SustainTuneModifier.Value : 4.0f;
 
-        static Dictionary<string, (AudioClip, int, bool)> InstrDictionary = [];
-        static Dictionary<(string, int), AudioSource> TunedDictionary = [];
+        private static AudioClip? _instrClip;
+        private static int _sourceNoteNumber;
+        private static bool _loopAudio;
+        private static Dictionary<int, AudioSource> _tunedDictionary = [];
 
-        static ConcurrentDictionary<(string, int), float> TimerDictionary =
-            new();
-        static List<List<(int, bool, int)>> tuneList = [];
-        static List<List<(int, bool, int)>> keepTuneList = [];
+        private static ConcurrentDictionary<int, float> _timerDictionary = new();
 
-        public static bool theShowIsOn = false;
-        public static bool secondaryKeyBind = false;
-        public static bool keyBindInit = false;
-        public static string activeClipName = "";
-        public static bool isSustaining = false;
-        public static bool isAutoPlayOn = false;
-        public static float autoPlaySpeed = 1;
-        public static float autoPlayCount = 0;
-        public static GameObject? activeInstrObject;
+        private static readonly List<List<(int, bool, int)>> TuneList = [];
+        private static readonly List<List<(int, bool, int)>> KeepTuneList = [];
+
+        public static bool TheShowIsOn;
+        public static bool SecondaryKeyBind;
+        public static bool KeyBindInit;
+        public static bool IsSustaining;
+        public static bool IsAutoPlayOn;
+        public static float AutoPlaySpeed = 1;
+        public static float AutoPlayCount;
+        public static GameObject? ActiveInstrObject;
 
         private static PlayerControllerB? Player => GameNetworkManager.Instance?.localPlayerController;
 
-        public static void RegisterInstrClip(GameObject gameObject, int sourceNoteNumber, AudioClip clip, bool isLoop)
+        public static void RegisterInstrClip(GameObject gameObject, int originNoteNumber, AudioClip clip, bool isLoop)
         {
-            foreach (var tup in TunedDictionary)
+            _timerDictionary.Clear();
+            foreach (var audioSource in _tunedDictionary.Values)
             {
-                tup.Value?.Stop();
+                Instruments4MusicPlugin.AddLog($"destroy {audioSource.GetInstanceID()}.");
+                audioSource.outputAudioMixerGroup = null;
+                Destroy(audioSource);
             }
-            TunedDictionary.Clear();
-            Instruments4MusicPlugin.AddLog($"TunedDictionary clear.");
+            _tunedDictionary.Clear();
+            Instruments4MusicPlugin.AddLog($"TunedDictionary cleared.");
 
-            InstrDictionary[clip.name] = (clip, sourceNoteNumber, isLoop);
+            _instrClip = clip;
+            _sourceNoteNumber = originNoteNumber;
+            _loopAudio = isLoop;
 
-            activeClipName = clip.name;
-            activeInstrObject = gameObject;
-            theShowIsOn = true;
-            OnDisable();
-            if (Player != null) Player.inTerminalMenu = true;
-            MusicHUD.ShowUserInterface();
-            Instruments4MusicPlugin.AddLog($"Playing {activeClipName}.");
+            ActiveInstrObject = gameObject;
+            TheShowIsOn = true;
+            DisableController();
+            MusicHud.ShowUserInterface();
+            if (MusicHud.Instance.IsInputing) MusicHud.Instance.TriggerInputNote();
+            Instruments4MusicPlugin.AddLog($"Playing {_instrClip.name}.");
 
             //StartAutoPlay("2.7,01030,,,,030,,,,032,,,,042,,,,0b030,,,,030,,,,030,,,," +
             //    "010,,020,,0a030,,,,030,,,,032,,,,042,,,,0g052,,,,040,,,,030,,,,020,,,," +
@@ -77,26 +78,25 @@ namespace Instruments4Music
 
         public static void DeActiveInstrument()
         {
-            theShowIsOn = false;
-            OnEnable();
-            if (Player != null) Player.inTerminalMenu = false;
-            MusicHUD.HideUserInterface();
-            Instruments4MusicPlugin.AddLog($"DeActive {activeClipName}.");
+            TheShowIsOn = false;
+            EnableController();
+            MusicHud.HideUserInterface();
+            Instruments4MusicPlugin.AddLog($"DeActive {_instrClip.name}.");
         }
 
         /* NoteNumber: 0~35 corresponding to the Note names of 3 octaves */
         public static void PlayTunedAudio(int targetNoteNumber, bool isSoft, bool newPulse)
         {
-            Instruments4MusicPlugin.AddLog($"Playing note {targetNoteNumber}, softer: {isSoft}.");
-            MusicHUD.instance.OnButtonClicked(targetNoteNumber);
-            TimerDictionary[(activeClipName, targetNoteNumber)] = lastTimer;
+            //Instruments4MusicPlugin.AddLog($"Playing note {targetNoteNumber}, softer: {isSoft}.");
+            MusicHud.Instance.OnButtonClicked(targetNoteNumber);
+            _timerDictionary[targetNoteNumber] = LastTimer;
             var volume = 1.0f;
             if (isSoft && newPulse)
             {
-                volume -= softModifier;
+                volume -= SoftModifier;
             }
 
-            if (TunedDictionary.TryGetValue((activeClipName, targetNoteNumber), out var audioSource))
+            if (_tunedDictionary.TryGetValue(targetNoteNumber, out var audioSource))
             {
                 audioSource.volume = volume;
                 if (newPulse)
@@ -107,30 +107,28 @@ namespace Instruments4Music
                 return;
             }
 
-            if (!InstrDictionary.TryGetValue(activeClipName, out var value)) return;
+            var power = targetNoteNumber - _sourceNoteNumber;
 
-            var clip = value.Item1;
-            var sourceNoteNumber = value.Item2;
-            var isLoop = value.Item3;
-            var power = targetNoteNumber - sourceNoteNumber;
-
-            audioSource = Player?.GetComponent<Transform>()?.gameObject?.AddComponent<AudioSource>();
+            audioSource = ActiveInstrObject?.AddComponent<AudioSource>();
+            //audioSource = Player?.GetComponent<Transform>()?.gameObject?.AddComponent<AudioSource>(); //conflict to CustomSounds
             if (audioSource == null) return;
-            Instruments4MusicPlugin.AddLog($"Apply tune mixer group Tune{power}.");
-            audioSource.outputAudioMixerGroup = Instruments4MusicPlugin.instance.tuneMixer.FindMatchingGroups($"Tune{power}")[0];
+            Instruments4MusicPlugin.AddLog($"Apply mixer group Tune{power}, {audioSource.GetInstanceID()}, clip: {_instrClip.name}.");
+            audioSource.outputAudioMixerGroup = Instruments4MusicPlugin.Instance.TuneMixer.FindMatchingGroups($"Tune{power}")[0];
             //audioSource.pitch = (float)Math.Pow(TuneCoeff, power);
-            audioSource.clip = clip;
+            audioSource.clip = _instrClip;
             audioSource.volume = volume;
-            audioSource.loop = isLoop;
+            audioSource.loop = _loopAudio;
             audioSource.spatialBlend = 0.5f;
-            TunedDictionary.Add((activeClipName, targetNoteNumber), audioSource);
+            _tunedDictionary[targetNoteNumber] = audioSource;
+            Instruments4MusicPlugin.AddLog($"{audioSource.GetInstanceID()} {audioSource.clip} to {_instrClip.name}.");
             audioSource.Play();
+            Instruments4MusicPlugin.AddLog($"{audioSource.GetInstanceID()} {audioSource.clip} to {_instrClip.name}.");
         }
 
         public static void StartAutoPlay(string musicNotes)
         {
-            isAutoPlayOn = false;
-            if (!theShowIsOn) return;
+            IsAutoPlayOn = false;
+            if (!TheShowIsOn) return;
 
             int[] lowerCaseMapping = [9, 11, 0, 2, 4, 5, 7];
             int[] digitMapping = [12, 14, 16, 17, 19, 21, 23];
@@ -138,26 +136,26 @@ namespace Instruments4Music
 
             string[] noteArray = Regex.Replace(musicNotes, @"\s", "").Split(',');
             var maxKeep = 0;
-            tuneList.Clear();
+            TuneList.Clear();
 
-            if (noteArray.Length < 2 || !float.TryParse(noteArray[0], out autoPlaySpeed)) return;
+            if (noteArray.Length < 2 || !float.TryParse(noteArray[0], out AutoPlaySpeed)) return;
             for (var i = 1; i < noteArray.Length; i++)
             {
                 var subList = new List<(int, bool, int)>();
                 if (noteArray[i].Length % 2 != 1 || noteArray[i].Length < 2)
                 {
-                    tuneList.Add(subList);
+                    TuneList.Add(subList);
                     continue;
                 }
                 var param = noteArray[i][0];
                 if (!char.IsDigit(param) && param is (< 'A' or > 'F') and (< 'a' or > 'f'))
                 {
-                    tuneList.Add(subList);
+                    TuneList.Add(subList);
                     continue;
                 }
                 var paramHex = Convert.ToInt32(param.ToString(), 16);
 
-                isSustaining = (paramHex & 0x1) != 0;
+                IsSustaining = (paramHex & 0x1) != 0;
                 var isSoft = (paramHex & 0x2) != 0;
 
                 for (var j = 1; j < noteArray[i].Length; j += 2)
@@ -186,104 +184,102 @@ namespace Instruments4Music
                     var keep = Convert.ToInt32(modifierChar.ToString(), 16) & 0x7;
                     maxKeep = keep > maxKeep ? keep : maxKeep;
                     subList.Add((noteNumber, isSoft, keep));
-                    Instruments4MusicPlugin.AddLog($"set ({i},{j}) {noteNumber} {isSoft} {keep}");
                 }
-                tuneList.Add(subList);
+                TuneList.Add(subList);
             }
 
-            autoPlayCount = 0;
-            keepTuneList.Clear();
-            for (var i = 0; i < tuneList.Count + maxKeep; i++)
+            AutoPlayCount = 0;
+            KeepTuneList.Clear();
+            for (var i = 0; i < TuneList.Count + maxKeep; i++)
             {
-                keepTuneList.Add([]);
+                KeepTuneList.Add([]);
             }
 
-            isAutoPlayOn = true;
+            IsAutoPlayOn = true;
         }
 
         public static void DoAutoPlay()
         {
-            if (!isAutoPlayOn) return;
-            autoPlayCount += Time.deltaTime;
-            var num = (int)(autoPlayCount / 0.5f * autoPlaySpeed);
-            //num = num - 30;
+            if (!IsAutoPlayOn) return;
+            AutoPlayCount += Time.deltaTime;
+            var num = (int)(AutoPlayCount / 0.5f * AutoPlaySpeed);
+            num = num - 4;
             if (num < 0) return;
-            if (num >= tuneList.Count)
+            if (num >= TuneList.Count)
             {
-                isAutoPlayOn = false;
+                IsAutoPlayOn = false;
                 return;
             }
-            Instruments4MusicPlugin.AddLog($"num = {num}");
-            foreach (var tuple in tuneList[num])
+            foreach (var tuple in TuneList[num])
             {
                 var (noteNumber, isSoft, keep) = tuple;
-                Instruments4MusicPlugin.AddLog($"get {noteNumber} {isSoft} {keep}");
-                if (keepTuneList[num].All(tup => tup.Item1 != noteNumber))
+                if (KeepTuneList[num].All(tup => tup.Item1 != noteNumber))
                 {
-                    Instruments4MusicPlugin.AddLog($"play {num}");
                     PlayTunedAudio(noteNumber, isSoft, true);
-                    keepTuneList[num].Add((noteNumber, isSoft, 0));
+                    KeepTuneList[num].Add((noteNumber, isSoft, 0));
                 }
-                if (keep > 0 && tuneList[num + 1].All(tup => tup.Item1 != noteNumber) && keepTuneList[num + 1].All(tup => tup.Item1 != noteNumber))
+                if (keep > 0 && TuneList[num + 1].All(tup => tup.Item1 != noteNumber) && KeepTuneList[num + 1].All(tup => tup.Item1 != noteNumber))
                 {
-                    keepTuneList[num + 1].Add((noteNumber, isSoft, keep - 1));
+                    KeepTuneList[num + 1].Add((noteNumber, isSoft, keep - 1));
                 }
             }
 
-            foreach (var tuple in keepTuneList[num])
+            foreach (var tuple in KeepTuneList[num])
             {
                 var (noteNumber, isSoft, keep) = tuple;
                 PlayTunedAudio(noteNumber, isSoft, false);
-                if (keep > 0 && tuneList[num + 1].All(tup => tup.Item1 != noteNumber) && keepTuneList[num + 1].All(tup => tup.Item1 != noteNumber))
+                if (keep > 0 && TuneList[num + 1].All(tup => tup.Item1 != noteNumber) && KeepTuneList[num + 1].All(tup => tup.Item1 != noteNumber))
                 {
-                    keepTuneList[num + 1].Add((noteNumber, isSoft, keep - 1));
+                    KeepTuneList[num + 1].Add((noteNumber, isSoft, keep - 1));
                 }
             }
         }
 
         public static void AudioCountDown()
         {
-            foreach (var timerDictionaryKey in TimerDictionary.Keys)
+            foreach (var timerDictionaryKey in _timerDictionary.Keys)
             {
-                var timeLast = TimerDictionary[timerDictionaryKey];
-                if (TunedDictionary.TryGetValue(timerDictionaryKey, out var audioSource) && timeLast >= 0.0f &&
+                var timeLast = _timerDictionary[timerDictionaryKey];
+                if (_tunedDictionary.TryGetValue(timerDictionaryKey, out var audioSource) && timeLast >= 0.0f &&
                     audioSource.volume > 0.01f)
                 {
-                    if (isSustaining)
+                    if (IsSustaining)
                     {
-                        TimerDictionary[timerDictionaryKey] = timeLast - Time.deltaTime / sustainModifier;
-                        audioSource.volume = (float)(audioSource.volume * Math.Exp(-attenuationCoeff * Time.deltaTime / sustainModifier));
+                        _timerDictionary[timerDictionaryKey] = timeLast - Time.deltaTime / SustainModifier;
+                        audioSource.volume = (float)(audioSource.volume * Math.Exp(-AttenuationCoeff * Time.deltaTime / SustainModifier));
                     }
                     else
                     {
-                        TimerDictionary[timerDictionaryKey] = timeLast - Time.deltaTime;
-                        audioSource.volume = (float)(audioSource.volume * Math.Exp(-attenuationCoeff * Time.deltaTime));
+                        _timerDictionary[timerDictionaryKey] = timeLast - Time.deltaTime;
+                        audioSource.volume = (float)(audioSource.volume * Math.Exp(-AttenuationCoeff * Time.deltaTime));
                     }
                 }
                 else
                 {
                     audioSource?.Stop();
-                    TimerDictionary.Remove(timerDictionaryKey, out _);
+                    _timerDictionary.Remove(timerDictionaryKey, out _);
                 }
             }
         }
 
-        private static void OnEnable()
+        private static void EnableController()
         {
             try
             {
+                if (Player != null) Player.inTerminalMenu = false;
                 Player?.playerActions.Movement.Enable();
             }
             catch (Exception ex)
             {
-                Debug.LogError((object)$"Error while subscribing to input in PlayerController!: {(object)ex}");
+                Debug.LogError($"Error while subscribing to input in PlayerController!: {ex}");
             }
         }
 
-        private static void OnDisable()
+        private static void DisableController()
         {
             try
             {
+                if (Player != null) Player.inTerminalMenu = true;
                 Player?.playerActions.Movement.Enable();
             }
             catch (Exception ex)
@@ -294,32 +290,29 @@ namespace Instruments4Music
 
         public void Awake()
         {
+            _tunedDictionary = [];
 
-            InstrDictionary = [];
-            TunedDictionary = [];
+            _timerDictionary = new ConcurrentDictionary<int, float>();
 
-            TimerDictionary = new ConcurrentDictionary<(string, int), float>();
+            TheShowIsOn = false;
+            SecondaryKeyBind = false;
 
-            theShowIsOn = false;
-            secondaryKeyBind = false;
-            activeClipName = "";
-
-            if (keyBindInit) return;
+            if (KeyBindInit) return;
             SetupKeyBindCallbacks();
-            keyBindInit = !keyBindInit;
+            KeyBindInit = !KeyBindInit;
         }
 
         public void SetupKeyBindCallbacks()
         {
-            Instruments4MusicPlugin.inputActionsInstance.Showtime.performed += OnShowtimePressed;
-            Instruments4MusicPlugin.inputActionsInstance.CurtainCall.performed += OnCurtainCallPressed;
-            Instruments4MusicPlugin.inputActionsInstance.ChangeMode.performed += OnChangeModePressed;
-            Instruments4MusicPlugin.inputActionsInstance.InputNote.performed += OnInputNotePressed;
+            Instruments4MusicPlugin.InputActionsInstance.Showtime.performed += OnShowtimePressed;
+            Instruments4MusicPlugin.InputActionsInstance.CurtainCall.performed += OnCurtainCallPressed;
+            Instruments4MusicPlugin.InputActionsInstance.ChangeMode.performed += OnChangeModePressed;
+            Instruments4MusicPlugin.InputActionsInstance.InputNote.performed += OnInputNotePressed;
         }
 
         public void OnShowtimePressed(InputAction.CallbackContext showtimeContext)
         {
-            if (theShowIsOn) return;
+            if (TheShowIsOn) return;
             if (!showtimeContext.performed) return;
             if (StationaryScript.IsLookingAtInstrument(out var instrumentObj))
             {
@@ -337,7 +330,7 @@ namespace Instruments4Music
 
         public void OnCurtainCallPressed(InputAction.CallbackContext curtainCallContext)
         {
-            if (!theShowIsOn) return;
+            if (!TheShowIsOn) return;
             if (!curtainCallContext.performed) return;
 
             Instruments4MusicPlugin.AddLog("Maybe next time.");
@@ -346,133 +339,133 @@ namespace Instruments4Music
 
         public void OnChangeModePressed(InputAction.CallbackContext changeModeContext)
         {
-            if (!theShowIsOn) return;
+            if (!TheShowIsOn) return;
             if (!changeModeContext.performed) return;
 
             Instruments4MusicPlugin.AddLog("Change key bind mode.");
-            secondaryKeyBind = !secondaryKeyBind;
-            MusicHUD.UpdateButtonTips();
+            SecondaryKeyBind = !SecondaryKeyBind;
+            MusicHud.UpdateButtonTips();
         }
 
         public void OnInputNotePressed(InputAction.CallbackContext inputNoteContext)
         {
-            if (!theShowIsOn) return;
+            if (!TheShowIsOn) return;
             if (!inputNoteContext.performed) return;
 
             Instruments4MusicPlugin.AddLog("Input music note.");
-            MusicHUD.instance.TriggerInputNote();
+            MusicHud.Instance.TriggerInputNote();
         }
 
         public void Update()
         {
-            if (TimerDictionary.Count > 0)
+            if (_timerDictionary.Count > 0)
             {
-                if (!isAutoPlayOn)
+                if (!IsAutoPlayOn)
                 {
-                    isSustaining = Instruments4MusicPlugin.inputActionsInstance.Sustain.ReadValue<float>() > 0.5f;
+                    IsSustaining = Instruments4MusicPlugin.InputActionsInstance.Sustain.ReadValue<float>() > 0.5f;
                 }
                 AudioCountDown();
             }
 
-            if (!theShowIsOn) return;
-            if (isAutoPlayOn)
+            if (!TheShowIsOn) return;
+            if (IsAutoPlayOn)
             {
                 DoAutoPlay();
             }
             var semiTone = 0;
-            var isSoft = Instruments4MusicPlugin.inputActionsInstance.Soft.ReadValue<float>() > 0.5f;
-            if (Instruments4MusicPlugin.inputActionsInstance.Semitone.ReadValue<float>() > 0.5f && !secondaryKeyBind)
+            var isSoft = Instruments4MusicPlugin.InputActionsInstance.Soft.ReadValue<float>() > 0.5f;
+            if (Instruments4MusicPlugin.InputActionsInstance.Semitone.ReadValue<float>() > 0.5f && !SecondaryKeyBind)
             {
                 semiTone = 1;
             }
 
-            if (secondaryKeyBind)
+            if (SecondaryKeyBind)
             {
-                var key = Instruments4MusicPlugin.inputActionsInstance.LowCKey2;
+                var key = Instruments4MusicPlugin.InputActionsInstance.LowCKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(0 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.LowDKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.LowDKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(2 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.LowEKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.LowEKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(4, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.LowFKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.LowFKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(5 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.LowGKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.LowGKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(7 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.LowAKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.LowAKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(9 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.LowBKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.LowBKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(11, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidCKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidCKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(12 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidDKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidDKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(14 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidEKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidEKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(16, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidFKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidFKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(17 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidGKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidGKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(19 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidAKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidAKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(21 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidBKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidBKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(23, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.HighCKey2;
+                key = Instruments4MusicPlugin.InputActionsInstance.HighCKey2;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(24 + semiTone, isSoft, key.triggered);
@@ -480,136 +473,136 @@ namespace Instruments4Music
             }
             else
             {
-                var key = Instruments4MusicPlugin.inputActionsInstance.LowCKey;
+                var key = Instruments4MusicPlugin.InputActionsInstance.LowCKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(0 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.LowDKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.LowDKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(2 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.LowEKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.LowEKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(4, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.LowFKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.LowFKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(5 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.LowGKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.LowGKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(7 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.LowAKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.LowAKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(9 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.LowBKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.LowBKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(11, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidCKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidCKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(12 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidDKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidDKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(14 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidEKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidEKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(16, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidFKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidFKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(17 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidGKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidGKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(19 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidAKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidAKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(21 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.MidBKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.MidBKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(23, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.HighCKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.HighCKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(24 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.HighDKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.HighDKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(26 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.HighEKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.HighEKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(28, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.HighFKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.HighFKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(29 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.HighGKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.HighGKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(31 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.HighAKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.HighAKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(33 + semiTone, isSoft, key.triggered);
                 }
 
-                key = Instruments4MusicPlugin.inputActionsInstance.HighBKey;
+                key = Instruments4MusicPlugin.InputActionsInstance.HighBKey;
                 if (key != null && (key.ReadValue<float>() > 0.5f || key.triggered))
                 {
                     PlayTunedAudio(35, isSoft, key.triggered);
                 }
             }
 
-            MusicHUD.instance.OnMenuClicked(1, isSoft);
-            MusicHUD.instance.OnMenuClicked(2, semiTone == 1);
-            MusicHUD.instance.OnMenuClicked(3, isSustaining);
+            MusicHud.Instance.OnMenuClicked(1, isSoft);
+            MusicHud.Instance.OnMenuClicked(2, semiTone == 1);
+            MusicHud.Instance.OnMenuClicked(3, IsSustaining);
         }
     }
 }

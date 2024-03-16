@@ -1,12 +1,11 @@
 ﻿using LethalCompanyInputUtils.Api;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.DualShock;
 
 namespace Instruments4Music
 {
     public class InputActions : LcInputActions
     {
-        [InputAction("<Keyboard>/backspace", Name = "Showtime!", ActionId = "Showtime", KbmInteractions = "hold(duration = 2)")]
+        [InputAction("<Keyboard>/backspace", Name = "Showtime!", ActionId = "Showtime", KbmInteractions = "hold(duration = 1)")]
         public InputAction? Showtime { get; set; }
         [InputAction("<Keyboard>/escape", Name = "Curtain Call", ActionId = "CurtainCall")]
         public InputAction? CurtainCall { get; set; }

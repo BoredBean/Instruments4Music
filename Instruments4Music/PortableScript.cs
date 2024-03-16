@@ -119,12 +119,12 @@ namespace Instruments4Music
 
         public void Update()
         {
-            if (Player == null || TuneAudioScript.theShowIsOn || !IsHoldingInstrument(out var instrumentObj)) return;
+            if (Player == null || TuneAudioScript.TheShowIsOn || !IsHoldingInstrument(out var instrumentObj)) return;
 
             var obj = instrumentObj?.GetComponent<GrabbableObject>();
             if (obj == null) return;
             var newText =
-                $"Showtime!: [{InputActions.GetButtonDescription(Instruments4MusicPlugin.inputActionsInstance.Showtime)}] (Hold)";
+                $"Showtime!: [{InputActions.GetButtonDescription(Instruments4MusicPlugin.InputActionsInstance.Showtime)}] (Hold)";
             HUDManager.Instance.ChangeControlTipMultiple(obj.itemProperties.toolTips.AddToArray(newText), true,
                 obj.itemProperties);
         }

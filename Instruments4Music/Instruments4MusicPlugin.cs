@@ -15,25 +15,22 @@ namespace Instruments4Music
     [BepInProcess("Lethal Company.exe")]
     public class Instruments4MusicPlugin : BaseUnityPlugin
     {
-        public static Instruments4MusicPlugin instance;
+        public static Instruments4MusicPlugin? Instance;
 
         internal static ManualLogSource? logger;
         public static ConfigFile? config;
-        public static InstrumentsConfig configInstance;
 
-        internal static InputActions inputActionsInstance = new();
-        public AssetBundle assets;
+        internal static InputActions InputActionsInstance = new();
+        public AssetBundle? Assets;
 
         // patch game
-        private readonly Harmony harmony = new(MyPluginInfo.PLUGIN_GUID);
+        private readonly Harmony _harmony = new(MyPluginInfo.PLUGIN_GUID);
 
-        public GameObject hudPrefab;
-        public GameObject hudInstance;
-        public HUDManager hudManager;
-        public HUDElement hudElement;
-        public AudioMixer tuneMixer;
-
-        public float hudScale = 0.45f;
+        public GameObject? HudPrefab;
+        public GameObject? HudInstance;
+        public HUDManager? HudManager;
+        public HUDElement? HudElement;
+        public AudioMixer? TuneMixer;
 
         public static void AddLog(string str)
         {
@@ -42,15 +39,15 @@ namespace Instruments4Music
 
         private void Awake()
         {
-            if (instance != null)
+            if (Instance != null)
             {
                 throw new System.Exception("More than 1 plugin instance.");
             }
-            instance = this;
+            Instance = this;
 
-            logger = this.Logger;
+            logger = Logger;
 
-            config = this.Config;
+            config = Config;
 
             InstrumentsConfig.Load();
 
@@ -58,11 +55,11 @@ namespace Instruments4Music
             AddLog($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
             // load hud
-            assets = AssetUtils.LoadAssetBundleFromResources("instrumentassets", typeof(Instruments4MusicPlugin).Assembly);
-            hudPrefab = assets.LoadAsset<GameObject>("MusicPanel");
-            tuneMixer = assets.LoadAsset<AudioMixer>("Tuner");
+            Assets = AssetUtils.LoadAssetBundleFromResources("instrumentassets", typeof(Instruments4MusicPlugin).Assembly);
+            HudPrefab = Assets.LoadAsset<GameObject>("MusicPanel");
+            TuneMixer = Assets.LoadAsset<AudioMixer>("Tuner");
 
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
+            _harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
     }
 
@@ -94,41 +91,46 @@ namespace Instruments4Music
                 Instruments4MusicPlugin.AddLog("TuneAudioScript Added");
             }
 
-            if (obj.GetComponent<MusicHUD>() == null)
+            if (obj.GetComponent<MusicHud>() == null)
             {
-                obj.AddComponent<MusicHUD>();
+                obj.AddComponent<MusicHud>();
                 Instruments4MusicPlugin.AddLog("MusicHUD Added");
             }
         }
     }
 
     [HarmonyPatch(typeof(HUDManager))]
-    public class HUDPatches
+    public class HudPatches
     {
         [HarmonyPostfix]
         [HarmonyPatch("Awake")]
         static void Awake_Postfix(HUDManager __instance)
         {
-            Instruments4MusicPlugin.instance.hudManager = __instance;
+            Instruments4MusicPlugin.Instance.HudManager = __instance;
 
             var elements = __instance.GetPrivateField<HUDElement[]>("HUDElements");
 
-            var HUD = Object.Instantiate(Instruments4MusicPlugin.instance.hudPrefab, elements[0].canvasGroup.transform.parent);
-            Instruments4MusicPlugin.instance.hudInstance = HUD;
-            HUD.transform.localScale = new Vector3(1f, 1f, 1f) * InstrumentsConfig.ConfigHUDScale.Value;
+            var hud = Object.Instantiate(Instruments4MusicPlugin.Instance.HudPrefab,
+                elements[0].canvasGroup.transform.parent);
+            Instruments4MusicPlugin.Instance.HudInstance = hud;
+            if (hud == null) return;
+
+            hud.transform.localScale = new Vector3(1f, 1f, 1f) * (InstrumentsConfig.ConfigHudScale?.Value != null
+                ? InstrumentsConfig.ConfigHudScale.Value
+                : 1.0f);
             Instruments4MusicPlugin.AddLog("MusicHUD Instantiated");
 
             HUDElement newElement = new();
-            Instruments4MusicPlugin.instance.hudElement = newElement;
-            var canvasGroup = HUD.GetComponent<CanvasGroup>() ?? HUD.AddComponent<CanvasGroup>();
+            Instruments4MusicPlugin.Instance.HudElement = newElement;
+            var canvasGroup = hud.GetComponent<CanvasGroup>() ?? hud.AddComponent<CanvasGroup>();
             newElement.canvasGroup = canvasGroup;
             __instance.PingHUDElement(newElement, 0f, 0f, 0f);
 
-            List<HUDElement> elementList = [..elements, newElement];
+            List<HUDElement> elementList = [.. elements, newElement];
             elements = [.. elementList];
 
             __instance.GetType().GetField("HUDElements", BindingFlags.NonPublic | BindingFlags.Instance)
-                .SetValue(__instance, elements);
+                ?.SetValue(__instance, elements);
         }
     }
 }
