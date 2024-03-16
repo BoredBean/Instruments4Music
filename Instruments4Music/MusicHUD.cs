@@ -344,7 +344,7 @@ namespace Instruments4Music
                 inputField.DeactivateInputField();
                 IsInputing = false;
                 Instruments4MusicPlugin.AddLog($"Input stop, get note: {inputField.text}.");
-                TuneAudioScript.StartAutoPlay(inputField.text);
+                TuneAudioScript.InitAutoPlay(inputField.text);
             }
             else
             {

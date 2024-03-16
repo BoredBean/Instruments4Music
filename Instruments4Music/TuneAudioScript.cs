@@ -56,9 +56,9 @@ namespace Instruments4Music
 
             ActiveInstrObject = gameObject;
             TheShowIsOn = true;
-            DisableController();
             MusicHud.ShowUserInterface();
             if (MusicHud.Instance.IsInputing) MusicHud.Instance.TriggerInputNote();
+            if (!SecondaryKeyBind) DisableController();
             Instruments4MusicPlugin.AddLog($"Playing {_instrClip.name}.");
 
             //StartAutoPlay("2.7,01030,,,,030,,,,032,,,,042,,,,0b030,,,,030,,,,030,,,," +
@@ -120,12 +120,12 @@ namespace Instruments4Music
             audioSource.loop = _loopAudio;
             audioSource.spatialBlend = 0.5f;
             _tunedDictionary[targetNoteNumber] = audioSource;
-            Instruments4MusicPlugin.AddLog($"{audioSource.GetInstanceID()} {audioSource.clip} to {_instrClip.name}.");
+            //Instruments4MusicPlugin.AddLog($"{audioSource.GetInstanceID()} {audioSource.clip} to {_instrClip.name}.");
             audioSource.Play();
             Instruments4MusicPlugin.AddLog($"{audioSource.GetInstanceID()} {audioSource.clip} to {_instrClip.name}.");
         }
 
-        public static void StartAutoPlay(string musicNotes)
+        public static void InitAutoPlay(string musicNotes)
         {
             IsAutoPlayOn = false;
             if (!TheShowIsOn) return;
@@ -203,7 +203,7 @@ namespace Instruments4Music
             if (!IsAutoPlayOn) return;
             AutoPlayCount += Time.deltaTime;
             var num = (int)(AutoPlayCount / 0.5f * AutoPlaySpeed);
-            num = num - 4;
+            num -= 4;
             if (num < 0) return;
             if (num >= TuneList.Count)
             {
@@ -266,8 +266,11 @@ namespace Instruments4Music
         {
             try
             {
-                if (Player != null) Player.inTerminalMenu = false;
-                Player?.playerActions.Movement.Enable();
+                if (Player == null) return;
+                Player.inTerminalMenu = false;
+                Player.inSpecialInteractAnimation = false;
+                FindObjectOfType<Terminal>().timeSinceTerminalInUse = 0.0f;
+                Instruments4MusicPlugin.AddLog($"Trying to re-enable the controller.");
             }
             catch (Exception ex)
             {
@@ -279,12 +282,14 @@ namespace Instruments4Music
         {
             try
             {
-                if (Player != null) Player.inTerminalMenu = true;
-                Player?.playerActions.Movement.Enable();
+                if (Player == null) return;
+                Player.inTerminalMenu = true;
+                Player.inSpecialInteractAnimation = true;
+                Instruments4MusicPlugin.AddLog($"Trying to disable the controller.");
             }
             catch (Exception ex)
             {
-                Debug.LogError((object)$"Error while unsubscribing from input in PlayerController!: {(object)ex}");
+                Debug.LogError($"Error while unsubscribing from input in PlayerController!: {ex}");
             }
         }
 
@@ -312,8 +317,7 @@ namespace Instruments4Music
 
         public void OnShowtimePressed(InputAction.CallbackContext showtimeContext)
         {
-            if (TheShowIsOn) return;
-            if (!showtimeContext.performed) return;
+            if (TheShowIsOn || !showtimeContext.performed) return;
             if (StationaryScript.IsLookingAtInstrument(out var instrumentObj))
             {
                 if (instrumentObj == null) return;
@@ -330,8 +334,7 @@ namespace Instruments4Music
 
         public void OnCurtainCallPressed(InputAction.CallbackContext curtainCallContext)
         {
-            if (!TheShowIsOn) return;
-            if (!curtainCallContext.performed) return;
+            if (!TheShowIsOn || !curtainCallContext.performed) return;
 
             Instruments4MusicPlugin.AddLog("Maybe next time.");
             DeActiveInstrument();
@@ -339,11 +342,18 @@ namespace Instruments4Music
 
         public void OnChangeModePressed(InputAction.CallbackContext changeModeContext)
         {
-            if (!TheShowIsOn) return;
-            if (!changeModeContext.performed) return;
+            if (!TheShowIsOn || !changeModeContext.performed) return;
 
             Instruments4MusicPlugin.AddLog("Change key bind mode.");
             SecondaryKeyBind = !SecondaryKeyBind;
+            if (SecondaryKeyBind)
+            {
+                EnableController();
+            }
+            else
+            {
+                DisableController();
+            }
             MusicHud.UpdateButtonTips();
         }
 
