@@ -6,8 +6,6 @@ This plugin utilizes [LethalCompany InputUtils](https://thunderstore.io/c/lethal
 
 **The developer has limited knowledge of C# or Unity, so this plugin may not work very well.**
 
-**(Especially when you quit one room and then join another one.)**
-
 ## How to use:
 Aim at a possible stationary instrument or holding a portable instrument and press **"BackSpace"** for **1 second**.
 
@@ -32,18 +30,13 @@ You can then play an instrument with the default key bindings:
 | Mid                 | k | l | ; | n | m | , | . |
 | Lower               | y | u | i | o | p | h | j |
 
-Press **"Shift"** to play **semitone**: C#, D#, F#, G#, A#
-
-Press **"Ctrl"** as the **soft padel**.
-
-Press **"Space"** as the **sustain padel**.
-
-Press **"Tab"** to switch to the **secondary key binding** scheme.
-(The player **can't move or interact** with the **primary** mode, but is **free** with the **secondary** mode.)
-
-Press **"Enter"** to input an autoplay code, **press again** to **start autoplay**.
-
-Press **"ESC"** to **exit** playing mode.
+* Press **"Shift"** to play **semitone**: C#, D#, F#, G#, A#
+* Press **"Ctrl"** as the **soft padel**.
+* Press **"Space"** as the **sustain padel**.
+* Press **"Tab"** to switch to the **secondary key binding** scheme.
+(The player **can't move or interact** in the **primary** mode, but is **free** in the **secondary** mode.)
+* Press **"Enter"** to input an autoplay code, **press again** to **start autoplay**.
+* Press **"ESC"** to **exit** playing mode.
 
 [A Demo Video](https://www.bilibili.com/video/BV13r421s7rM)
 
@@ -51,8 +44,10 @@ Press **"ESC"** to **exit** playing mode.
 
 ## Auto Play：
 The design of autoplay code is more readable than simpler.
+
 This is an example of the code for autoplay. (start from 02:55)
-[AutoPlay Demo(start from 02:55)](https://www.bilibili.com/video/BV1hx42117r8/?share_source=copy_web&t=175)
+
+[AutoPlay Demo (start from 02:55)](https://www.bilibili.com/video/BV1hx42117r8/?share_source=copy_web&t=175)
 
 ```text
 2.7,01030,,,,030,,,,032,,,,042,,,,0b030,,,,030,,,,030,,,,
@@ -70,10 +65,11 @@ This is an example of the code for autoplay. (start from 02:55)
 0c017,,0g0,,,,2g0,,,,2g0,,,,,,0c0
 ```
 
-The first value, **2.7** is the playback speed. Similar to **bmp** somehow.
+The first value, **2.7** is the playback speed. The higher the faster (similar to **bmp** somehow).
 
 The other values, for example **0f012GA**:
-The head number **0** controls the soft padel and the sustain padel.
+
+* The head number **0** controls the soft padel and the sustain padel.
 
 | Value | IsSoft | IsSustaining |
 | --- | --- | --- |
@@ -82,9 +78,10 @@ The head number **0** controls the soft padel and the sustain padel.
 | 2 | true | false |
 | 3 | true | true |
 
-Then **f0** means play **Lower F** for **1** cycle.
-Then **12** means play **Mid C** for **3** cycles, at the same time.
-Then **GA** means play **Higher G#** for **3** cycles, at the same time.
+* The **f0** means play **Lower F** for **1** cycle.
+* The **12** means play **Mid C** for **3** cycles, at the same time.
+* The **GA** means play **Higher G#** for **3** cycles, at the same time.
+
 You can play a single note or multiple notes at the same time.
 
 | Type | The Note |
@@ -93,15 +90,16 @@ You can play a single note or multiple notes at the same time.
 | Mid note: | 1, 2, 3, 4, 5, 6, 7 |
 | Higher note: | C, D, E, F, G, A, B |
 
-The hex number **0/2/A** following the note represents the **duration** of the note, range **0-7**. 
-When the note is a semitone, the duration number needs to be increased by 8.
+* The hex number **0/2/A** following the note represents the **duration** of the note, range **0-7**.
+
+When the note is a **semitone**, the duration number needs to be **increased by 8**.
 
 | Semi? | The Hex Number |
 | --- | --- |
 | Duration | 0, 1, 2, 3, 4, 5, 6, 7 |
 | Duration(#) | 8, 9, A, B, C, D, E, F |
 
-Use commas **","** to separate the notes played in each cycle.
+* Use commas **","** to separate the notes played in each cycle.
 
 ## Future Plans：
 1. ✅Introduce more stationary or portable instruments.
