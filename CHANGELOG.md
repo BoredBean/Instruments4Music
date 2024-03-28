@@ -13,3 +13,9 @@
 3. Implemented volume decay using an exponential function.(more scientific)
 4. Added the Whoopie Cushion.
 5. Changed the default key for starting a performance to backspace.
+### Release v1.5.0
+1. Implement the autoplay function and free my hands.
+2. Use AudioMixer instead of pitch so the audio length won't change.
+3. Fix the conflict with CustomSounds, see [Replace the wrong AudioClip](https://github.com/clementinise/CustomSounds/issues/20).
+4. The player will stop moving when the primary music mode is active.
+5. Add lots of custom configurations.

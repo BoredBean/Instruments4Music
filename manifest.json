@@ -1,6 +1,6 @@
 {
     "name": "Instruments4Music",
-    "version_number": "1.0.0",
+    "version_number": "1.5.0",
     "website_url": "https://github.com/BoredBean/Instruments4Music",
     "description": "This plugin aims to introduce some musical instruments to the Lethal Company.",
     "dependencies": [
